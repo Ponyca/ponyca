@@ -1,0 +1,50 @@
+cmake_minimum_required(VERSION 2.8)
+project(ponyca)
+set(EXECUTABLE_OUTPUT_PATH ./build)
+set(LIBRARY_OUTPUT_PATH ./build)
+
+# Common
+file(GLOB_RECURSE common_sources common/*.cpp)
+include_directories(common/)
+add_library(common SHARED ${common_sources})
+
+# Client
+file(GLOB_RECURSE client_sources client/*.cpp)
+include_directories(client/ common/)
+add_executable(client ${client_sources})
+
+# Server
+file(GLOB_RECURSE server_sources server/*.cpp)
+include_directories(server/ common/)
+add_executable(server ${server_sources})
+
+#add_subdirectory(plugins)
+
+# Common link
+target_link_libraries(client common)
+target_link_libraries(server common)
+
+# Zlib
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS})
+target_link_libraries(common ${ZLIB_LIBRARIES})
+
+# OpenGL
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIRS})
+target_link_libraries(client ${OPENGL_LIBRARIES})
+
+# FreeType
+find_package(Freetype REQUIRED)
+include_directories(${FREETYPE_INCLUDE_DIRS})
+target_link_libraries(client ${FREETYPE_LIBRARIES})
+
+# OpenAL
+find_package(OpenAL REQUIRED)
+include_directories(${OPENAL_INCLUDE_DIRS})
+target_link_libraries(client ${OPENAL_LIBRARIES})
+
+# Dynlibs
+SET_TARGET_PROPERTIES(common PROPERTIES LINK_FLAGS "-ldl")
+
+
