@@ -14,8 +14,8 @@ namespace Ponyca::Protocol
 {
     class Structure
     {
-        serialize(std::string &buffer) = 0;
-        static Structure unserialize(std::string &buffer) = 0;
+        void serialize(std::string &buffer) = 0;
+        void unserialize(std::string &buffer) = 0;
     };
     class Packet : public Structure
     {
@@ -81,10 +81,10 @@ def main(infile):
             raise InvalidSyntax('Fields of structure %r is not a list' % structure)
         outfile_h += '\n    class %s : public Structure\n    {' % upfirst(structure)
         size = 0
-        serialize = '\nPonyca::%s::serialize(std::string &buffer' % \
+        serialize = '\nvoid Ponyca::%s::serialize(std::string &buffer' % \
                 upfirst(structure)
         serialize += ')\n{'
-        unserialize = 'Ponyca::%s::unserialize(std::string &buffer)\n{' % \
+        unserialize = 'void Ponyca::%s::unserialize(std::string &buffer)\n{' % \
                 upfirst(structure)
         for field in fields:
             (field, type_) = list(field.items())[0]
