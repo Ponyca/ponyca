@@ -1,0 +1,50 @@
+types:
+    bool:
+        type: boolean
+        size: 1
+    int8:
+        type: int8_t
+        size: 1
+    int16:
+        type: int16_t
+        size: 2
+    int32:
+        type: int32_t
+        size: 3
+    int64:
+        type: int64_t
+        size: 4
+    uint8:
+        type: uint8_t
+        size: 1
+    uint16:
+        type: uint16_t
+        size: 2
+    uint32:
+        type: uint32_t
+        size: 3
+    uint64:
+        type: uint64_t
+        size: 4
+
+    coordinates:
+        type: struct coordinates
+        size: 9
+
+structures:
+    - block:
+        - block_id: uint16
+        - variant_id: uint16
+    - placedBlock:
+        - worldId: uint16
+        - position: coordinates
+        - block: block
+    - protocolVersion:
+        - majorVersion: uint16
+        - minorVersion: uint16
+
+opcodes:
+    - "0x0000":
+        name: connect
+        fields:
+            - protocol: protocolVersion
