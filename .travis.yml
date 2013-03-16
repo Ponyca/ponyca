@@ -1,10 +1,9 @@
 language: cpp
 before_install:
-  - sudo apt-get install -qq zlib1g-dev libgl1-mesa-swx11-dev libx11-dev libxext-dev libfreetype6-dev libopenal-dev
+  - sudo apt-get install -qq zlib1g-dev libgl1-mesa-swx11-dev libx11-dev libxext-dev libfreetype6-dev libopenal-dev freeglut3-dev
 compiler:
   - clang
   - gcc
-before_install:
 script:
   - mkdir build
   - cd build
