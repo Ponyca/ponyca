@@ -19,7 +19,7 @@ namespace Ponyca
     {
     public:
         virtual std::string& serialize();
-        virtual uint64_t unserialize(std::string &buffer);
+        virtual uint64_t unserialize(const std::string &buffer);
 %s
     };
     class Packet : public Structure
@@ -69,7 +69,7 @@ def parse_field(field, type_, namespace, types):
         # ... otherwise, we have to use the one provided by Ponyca::Structure.
         out_serialize = '\n    buffer += Ponyca::Structure::serialize%s(%s);' % \
                 (realname, field)
-        out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer, %s);' % \
+        out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer.substr(size), %s);' % \
                 (realname, field)
     return (out_h, out_serialize, out_unserialize)
 
@@ -77,11 +77,11 @@ def handle_fields(fields, namespace, types):
     """Return the body (ie. the fields) of a Structure and the implementation
     of the serialize() and unserialize() methods of this structure."""
     out_h = '\n        virtual std::string& serialize();' + \
-            '\n        virtual uint64_t unserialize(std::string &buffer);'
+            '\n        virtual uint64_t unserialize(const std::string &buffer);'
     out_cpp = ''
     serialize = '\nstd::string& %s::serialize()\n{' % namespace
     serialize += '\n    std::string buffer;'
-    unserialize = 'uint64_t %s::unserialize(std::string &buffer)\n{' % \
+    unserialize = 'uint64_t %s::unserialize(const std::string &buffer)\n{' % \
             namespace
     unserialize += '\n    uint64_t size = 0;'
     fields = fields or []
@@ -116,7 +116,7 @@ def main(infile):
             cpptype = type_
         types[type_] = (upfirst(type_), cpptype, False)
         percent = (upfirst(type_), cpptype)
-        converters += '\n        uint64_t unserialize%s(std::string&, %s);' % percent
+        converters += '\n        uint64_t unserialize%s(const std::string&, %s);' % percent
         converters += '\n        std::string& serialize%s(%s);' % percent
     outfile_h %= converters
 
