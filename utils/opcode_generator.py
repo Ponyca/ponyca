@@ -52,6 +52,8 @@ def upfirst(name):
     return name[0].upper() + name[1:]
 
 def parse_field(field, type_, namespace, types):
+    """Return the body of the serialize() and unserialize() methods
+    of a Structure."""
     out_h = out_cpp = ''
     if type_ not in types:
         raise InvalidType('%r is not a valid type (undefined)' % type_)
@@ -59,9 +61,11 @@ def parse_field(field, type_, namespace, types):
     is_structure = types[type_][1]
     out_h += '\n        %s %s;' % (cpp_type, field)
     if is_structure:
+        # If the field is a structure, it has its own convertion function...
         out_serialize = '\n    buffer += %s.serialize();' % field
         out_unserialize = '\n    size += %s.unserialize(buffer);' % field
     else:
+        # ... otherwise, we have to use the one provided by Ponyca::Structure.
         out_serialize = '\n    buffer += Ponyca::Structure::serialize%s(%s);' % \
                 (upfirst(type_), field)
         out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer, %s);' % \
@@ -69,6 +73,8 @@ def parse_field(field, type_, namespace, types):
     return (out_h, out_serialize, out_unserialize)
 
 def handle_fields(fields, namespace, types):
+    """Return the body (ie. the fields) of a Structure and the implementation
+    of the serialize() and unserialize() methods of this structure."""
     out_h = '\n        virtual std::string& serialize();' + \
             '\n        virtual uint64_t unserialize(std::string &buffer);'
     out_cpp = ''
@@ -78,6 +84,7 @@ def handle_fields(fields, namespace, types):
             namespace
     unserialize += '\n    uint64_t size = 0;'
     for field in fields:
+        # This is the only way yaml allows us to access those data.
         (field, type_) = list(field.items())[0]
         (out_h2, out_serialize, out_unserialize) = parse_field(field, type_,
                 namespace, types)
@@ -95,7 +102,10 @@ def main(infile):
     structures = document['structures']
     opcodes = document['opcodes']
 
-    types = {}
+    types = {} # Format: {name: (cpptype, is_structure)}
+
+    # First, we read all types and declare their associated (un)serialization
+    # functions.
     converters = ''
     for (type_, attributes) in document['types'].items():
         if 'type' in attributes:
@@ -110,6 +120,7 @@ def main(infile):
 
     if not isinstance(structures, list):
         raise InvalidSyntax('Structures list is not a list')
+    # We now declare the structures and implement them.
     for structure in structures:
         (structure, fields) = list(structure.items())[0]
         if not isinstance(fields, list):
@@ -121,6 +132,8 @@ def main(infile):
         outfile_h += out_h + '\n    };\n'
         outfile_cpp += out_cpp
         types[structure] = ('Ponyca::%s' % upfirst(structure), True)
+
+    # Finally, we do the same to opcodes.
     for opcode in opcodes:
         (opcode, data) = list(opcode.items())[0]
         fields = data['fields']
