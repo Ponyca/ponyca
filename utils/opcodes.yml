@@ -1,50 +1,191 @@
 types:
     bool:
-        type: boolean
-        size: 1
+        type: bool
     int8:
         type: int8_t
-        size: 1
     int16:
         type: int16_t
-        size: 2
     int32:
         type: int32_t
-        size: 3
     int64:
         type: int64_t
-        size: 4
     uint8:
         type: uint8_t
-        size: 1
     uint16:
         type: uint16_t
-        size: 2
     uint32:
         type: uint32_t
-        size: 3
     uint64:
         type: uint64_t
-        size: 4
+    string:
+        type: std::string
+    msgpack:
+        type: msgpack::unpacked
 
     coordinates:
         type: struct coordinates
-        size: 9
+    position:
+        type: struct position
+    direction:
+        type: struct direction
+    structure:
+        type: Ponyca::Structure
+    list:
+        # Prefixed with its length (uint64) when serialized
+        type: std::vector<Ponyca::Structure>
+
+aliases:
+    # The following are dynamically-attributed identifiers. They start from
+    # 1, as 0 (zero) means we are in a special case, whose meaning is
+    # explicitely defined.
+    clientId: uint32
+    worldId: uint16
+    entityId: uint32
+    entityType: uint16
+    blockType: uint16
+    blockVariant: uint16
 
 structures:
     - block:
-        - block_id: uint16
-        - variant_id: uint16
+        - type: blockType
+        - variant: blockVariant
     - placedBlock:
-        - worldId: uint16
+        - id: worldId
         - position: coordinates
         - block: block
+    - client:
+        - id: clientId
+    - entity:
+        - id: entityId
+        - position: position
+        - direction: direction
+        - name: string
+        - playedBy: clientId # 0 means played by AI.
+        - type: entityType
+        - metadata: msgpack
     - protocolVersion:
         - majorVersion: uint16
         - minorVersion: uint16
+    - chunk:
+        - list: list # 3D-list of "block".
 
 opcodes:
+    # 0x0***: COMMON
+    ## 0x00**: CONNECTION
     - "0x0000":
         name: connect
         fields:
             - protocol: protocolVersion
+            - extensions: msgpack
+    - "0x0001":
+        name: login
+        fields:
+            - username: string
+            - password: string
+    - "0x0002":
+        name: ping
+        fields:
+            - id: uint32
+    ## 0x01**: CLIENTS
+    - "0x0100":
+        name: requestClientList
+        fields:
+    - "0x0101":
+        name: clientList
+        fields:
+            - list: list
+    - "0x0102":
+        name: getClientToClientAddresses
+        fields:
+            - list: list
+    - "0x0103":
+        name: closeConnection # or kick
+        fields:
+            - clientId: clientId
+            - reason: string
+    ## 0x02**: MESSAGING
+    - "0x0200":
+        name: message
+        fields:
+            - author: clientId # 0 means it's a server message.
+            - content: string
+
+    # 0x1*** MAP
+    ## 0x10** WORLDS
+    - "0x1000":
+        name: worldCreation
+        fields:
+            - id: worldId
+            - name: string
+    - "0x1001":
+        name: worldDestruction
+        fields:
+            - id: worldId
+    - "0x1002": # Not used. Reserved for consistency.
+        name: worldUpdate
+        fields:
+    - "0x1003":
+        name: worldsListRequest
+        fields:
+    - "0x1004":
+        name: worldsList
+        fields:
+            - list: list
+
+    ## 0x11**: BLOCKS
+    - "0x1100": # Not used. Reserved for consistency.
+        name: blockSpawn
+        fields:
+    - "0x1101": # Not used. Reserved for consistency.
+        name: blockDestruction 
+        fields:
+    - "0x1102":
+        name: blockUpdate
+        fields:
+            - block: placedBlock
+    - "0x1103":
+        name: chunkRequest
+        fields:
+            - coordinates: coordinates # Coordinates of any block in the chunk
+    - "0x1104":
+        name: chunkUpdate
+        fields:
+            - coordinates: coordinates # Coordinates of the first block of the chunl
+            - chunk: chunk
+    
+    ## 0x12**: ENTITIES
+    - "0x1200":
+        name: entitySpawn
+        fields:
+            - entity: entity
+    - "0x1201":
+        name: entityDestruction
+        fields:
+            - id: entityId
+    - "0x1202":
+        name: entityUpdate
+        fields:
+            - entity: entity
+    - "0x1203":
+        name: entityListRequest
+        fields:
+    - "0x1204":
+        name: entityList
+        fields:
+            - list: list # List of entities
+    - "0x1205":
+        name: entityMove
+        fields:
+            - id: entityId
+            - newPosition: position
+    - "0x1206":
+        name: entityDirection
+        fields:
+            - id: entityId
+            - newDirection: direction
+    - "0x1207": # Used for updating only one key-value pair
+        name: entityUpdateMetada
+        fields:
+            - id: entityId
+            - key: string
+            - value: string
