@@ -57,8 +57,9 @@ def parse_field(field, type_, namespace, types):
     out_h = out_cpp = ''
     if type_ not in types:
         raise InvalidType('%r is not a valid type (undefined)' % type_)
-    cpp_type = types[type_][0]
-    is_structure = types[type_][1]
+    realname = types[type_][0]
+    cpp_type = types[type_][1]
+    is_structure = types[type_][2]
     out_h += '\n        %s %s;' % (cpp_type, field)
     if is_structure:
         # If the field is a structure, it has its own convertion function...
@@ -67,9 +68,9 @@ def parse_field(field, type_, namespace, types):
     else:
         # ... otherwise, we have to use the one provided by Ponyca::Structure.
         out_serialize = '\n    buffer += Ponyca::Structure::serialize%s(%s);' % \
-                (upfirst(type_), field)
+                (realname, field)
         out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer, %s);' % \
-                (upfirst(type_), field)
+                (realname, field)
     return (out_h, out_serialize, out_unserialize)
 
 def handle_fields(fields, namespace, types):
@@ -113,7 +114,7 @@ def main(infile):
             cpptype = attributes['type']
         else:
             cpptype = type_
-        types[type_] = (cpptype, False)
+        types[type_] = (upfirst(type_), cpptype, False)
         percent = (upfirst(type_), cpptype)
         converters += '\n        uint64_t unserialize%s(std::string&, %s);' % percent
         converters += '\n        std::string& serialize%s(%s);' % percent
@@ -136,7 +137,7 @@ def main(infile):
                 'Ponyca::' + upfirst(structure), types)
         outfile_h += out_h + '\n    };\n'
         outfile_cpp += out_cpp
-        types[structure] = ('Ponyca::%s' % upfirst(structure), True)
+        types[structure] = (upfirst(structure), 'Ponyca::%s' % upfirst(structure), True)
 
     # Finally, we do the same to opcodes.
     for opcode in opcodes:
