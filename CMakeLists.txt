@@ -62,4 +62,10 @@ target_link_libraries(client ${OPENAL_LIBRARIES})
 # Dynlibs
 SET_TARGET_PROPERTIES(common PROPERTIES LINK_FLAGS "-ldl")
 
+# Enable C++11 on g++
+IF(UNIX)
+    IF(CMAKE_COMPILER_IS_GNUCXX)
+        add_definitions(-std=c++11)
+    ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+ENDIF(UNIX)
 
