@@ -83,6 +83,7 @@ def handle_fields(fields, namespace, types):
     unserialize = 'uint64_t %s::unserialize(std::string &buffer)\n{' % \
             namespace
     unserialize += '\n    uint64_t size = 0;'
+    fields = fields or []
     for field in fields:
         # This is the only way yaml allows us to access those data.
         (field, type_) = list(field.items())[0]
@@ -117,6 +118,10 @@ def main(infile):
         converters += '\n        uint64_t unserialize%s(std::string&, %s);' % percent
         converters += '\n        std::string& serialize%s(%s);' % percent
     outfile_h %= converters
+
+    # This is useful for consistency
+    for (key, value) in document['aliases'].items():
+        types[key] = types[value]
 
     if not isinstance(structures, list):
         raise InvalidSyntax('Structures list is not a list')
