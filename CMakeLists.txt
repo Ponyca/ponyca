@@ -60,12 +60,11 @@ add_definitions(${OPENAL_DEFINITIONS})
 target_link_libraries(client ${OPENAL_LIBRARIES})
 
 # Dynlibs
-SET_TARGET_PROPERTIES(common PROPERTIES LINK_FLAGS "-ldl")
+set_target_properties(common PROPERTIES LINK_FLAGS "-ldl")
 
-# Enable C++11 on g++
-IF(UNIX)
-    IF(CMAKE_COMPILER_IS_GNUCXX)
+# Enable C++11 on g++/clang++
+if(UNIX)
+    if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         add_definitions(-std=c++11)
-    ENDIF(CMAKE_COMPILER_IS_GNUCXX)
-ENDIF(UNIX)
-
+    endif(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+endif(UNIX)
