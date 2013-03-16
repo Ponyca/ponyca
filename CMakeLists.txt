@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(ponyca)
 set(EXECUTABLE_OUTPUT_PATH ./build)
 set(LIBRARY_OUTPUT_PATH ./build)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 # Common
 file(GLOB_RECURSE common_sources common/*.cpp)
@@ -30,6 +31,13 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 link_directories(${ZLIB_LINK_DIRS})
 add_definitions(${ZLIB_DEFINITIONS})
 target_link_libraries(common ${ZLIB_LIBRARIES})
+
+# MsgPack
+find_package(MsgPack REQUIRED)
+include_directories(${MSGPACK_INCLUDE_DIRS})
+link_directories(${MSGPACK_LINK_DIRS})
+add_definitions(${MSGPACK_DEFINITIONS})
+target_link_libraries(common ${MSGPACK_LIBRARIES})
 
 # OpenGL
 find_package(OpenGL REQUIRED)
