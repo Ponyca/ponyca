@@ -135,8 +135,10 @@ opcodes:
     ## 0x11**: BLOCKS
     - "0x1100": # Not used. Reserved for consistency.
         name: blockSpawn
+        fields:
     - "0x1101": # Not used. Reserved for consistency.
         name: blockDestruction 
+        fields:
     - "0x1102":
         name: blockUpdate
         fields:
@@ -177,10 +179,10 @@ opcodes:
             - id: entityId
             - newPosition: position
     - "0x1206":
-        name: entityRotation
+        name: entityDirection
         fields:
             - id: entityId
-            - newRotation: rotation
+            - newDirection: direction
     - "0x1207": # Used for updating only one key-value pair
         name: entityUpdateMetada
         fields:
