@@ -35,7 +35,7 @@ FOOTER_H = """
 """
 
 HEADER_CPP = """
-#include "protocol.h"
+#include "opcodes.h"
 
 """
 
