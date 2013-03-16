@@ -27,21 +27,36 @@ target_link_libraries(server common)
 # Zlib
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
+link_directories(${ZLIB_LINK_DIRS})
+add_definitions(${ZLIB_DEFINITIONS})
 target_link_libraries(common ${ZLIB_LIBRARIES})
 
 # OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})
+link_directories(${OPENGL_LINK_DIRS})
+add_definitions(${OPENGL_DEFINITIONS})
 target_link_libraries(client ${OPENGL_LIBRARIES})
+
+# GLUT
+find_package(GLUT REQUIRED)
+include_directories(${GLUT_INCLUDE_DIRS})
+link_directories(${GLUT_LINK_DIRS})
+add_definitions(${GLUT_DEFINITIONS})
+target_link_libraries(client ${GLUT_LIBRARIES})
 
 # FreeType
 find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
+link_directories(${FREETYPE_LINK_DIRS})
+add_definitions(${FREETYPE_DEFINITIONS})
 target_link_libraries(client ${FREETYPE_LIBRARIES})
 
 # OpenAL
 find_package(OpenAL REQUIRED)
 include_directories(${OPENAL_INCLUDE_DIRS})
+link_directories(${OPENAL_LINK_DIRS})
+add_definitions(${OPENAL_DEFINITIONS})
 target_link_libraries(client ${OPENAL_LIBRARIES})
 
 # Dynlibs
