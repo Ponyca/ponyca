@@ -1,6 +1,6 @@
 types:
     bool:
-        type: boolean
+        type: bool
         size: 1
     int8:
         type: int8_t
@@ -26,10 +26,22 @@ types:
     uint64:
         type: uint64_t
         size: 4
+    string:
+        type: std::string
+        size:
+    msgpack:
+        type: msgpack::unpacked
+        size:
 
     coordinates:
         type: struct coordinates
         size: 9
+    structure:
+        type: Ponyca::Structure
+        size:
+    list:
+        type: std::vector<Ponyca::Structure>
+        size:
 
 structures:
     - block:
@@ -44,7 +56,22 @@ structures:
         - minorVersion: uint16
 
 opcodes:
+    # COMMON
     - "0x0000":
         name: connect
         fields:
             - protocol: protocolVersion
+            - extensions: msgpack
+    - "0x0001":
+        name: login
+        fields:
+            - username: string
+            - password: string
+    - "0x0002":
+        name: ping
+        fields:
+            - id: uint64
+    - "0x0003":
+        name: getClientList
+        fields:
+            - list: list

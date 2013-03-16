@@ -9,13 +9,18 @@ HEADER_H = """
 #define PONYCA_PROTOCOL_H
 
 #include <stdint.h>
+#include <string>
+#include <vector>
+#include <msgpack.hpp>
 
 namespace Ponyca
 {
     class Structure
     {
-        void serialize(std::string &buffer) = 0;
-        void unserialize(std::string &buffer) = 0;
+    public:
+        virtual std::string& serialize();
+        virtual uint64_t unserialize(std::string &buffer);
+%s
     };
     class Packet : public Structure
     {
@@ -46,18 +51,42 @@ class InvalidType(Exception):
 def upfirst(name):
     return name[0].upper() + name[1:]
 
-def parse_field(field, type_, namespace, types, offset):
+def parse_field(field, type_, namespace, types):
     out_h = out_cpp = ''
     if type_ not in types:
         raise InvalidType('%r is not a valid type (undefined)' % type_)
     cpp_type = types[type_][0]
-    out_h += '\n        public %s %s;' % (cpp_type, field)
-    out_serialize = '\n    buffer += Ponyca::Structure::serialize'
-    out_serialize += '(%s);' % field
-    out_unserialize = '\n    %s += ' % field
-    out_unserialize += 'Ponyca::Structure::serialize(buffer, offset + %i);' % \
-            offset
+    is_structure = types[type_][1]
+    out_h += '\n        %s %s;' % (cpp_type, field)
+    if is_structure:
+        out_serialize = '\n    buffer += %s.serialize();' % field
+        out_unserialize = '\n    size += %s.unserialize(buffer);' % field
+    else:
+        out_serialize = '\n    buffer += Ponyca::Structure::serialize%s(%s);' % \
+                (upfirst(type_), field)
+        out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer, %s);' % \
+                (upfirst(type_), field)
     return (out_h, out_serialize, out_unserialize)
+
+def handle_fields(fields, namespace, types):
+    out_h = '\n        virtual std::string& serialize();' + \
+            '\n        virtual uint64_t unserialize(std::string &buffer);'
+    out_cpp = ''
+    serialize = '\nstd::string& %s::serialize()\n{' % namespace
+    serialize += '\n    std::string buffer;'
+    unserialize = 'uint64_t %s::unserialize(std::string &buffer)\n{' % \
+            namespace
+    unserialize += '\n    uint64_t size = 0;'
+    for field in fields:
+        (field, type_) = list(field.items())[0]
+        (out_h2, out_serialize, out_unserialize) = parse_field(field, type_,
+                namespace, types)
+        out_h += out_h2
+        serialize += out_serialize
+        unserialize += out_unserialize
+    out_cpp += serialize + '\n}\n'
+    out_cpp += unserialize + '\n    return size;\n}\n'
+    return (out_h, out_cpp)
 
 def main(infile):
     outfile_h = HEADER_H
@@ -67,11 +96,17 @@ def main(infile):
     opcodes = document['opcodes']
 
     types = {}
+    converters = ''
     for (type_, attributes) in document['types'].items():
         if 'type' in attributes:
-            types[type_] = (attributes['type'], attributes['size'])
+            cpptype = attributes['type']
         else:
-            types[type_] = (type_, attributes['size'])
+            cpptype = type_
+        types[type_] = (cpptype, False)
+        percent = (upfirst(type_), cpptype)
+        converters += '\n        uint64_t unserialize%s(std::string&, %s);' % percent
+        converters += '\n        std::string& serialize%s(%s);' % percent
+    outfile_h %= converters
 
     if not isinstance(structures, list):
         raise InvalidSyntax('Structures list is not a list')
@@ -80,39 +115,23 @@ def main(infile):
         if not isinstance(fields, list):
             raise InvalidSyntax('Fields of structure %r is not a list' % structure)
         outfile_h += '\n    class %s : public Structure\n    {' % upfirst(structure)
-        size = 0
-        serialize = '\nvoid Ponyca::%s::serialize(std::string &buffer' % \
-                upfirst(structure)
-        serialize += ')\n{'
-        unserialize = 'void Ponyca::%s::unserialize(std::string &buffer)\n{' % \
-                upfirst(structure)
-        for field in fields:
-            (field, type_) = list(field.items())[0]
-            (out_h, out_serialize, out_unserialize) = parse_field(field, type_,
-                    'Ponyca::' + structure, types, size)
-            size += types[type_][1]
-            outfile_h += out_h
-            serialize += out_serialize
-            unserialize += out_unserialize
-        outfile_h += '\n        public uint32_t packetSize = %i;' % size
-        outfile_h += '\n    };\n'
-        outfile_cpp += serialize + '\n}\n'
-        outfile_cpp += unserialize + '\n}\n'
-        types[structure] = ('Ponyca::%s' % upfirst(structure), size)
+        outfile_h += '\n    public:'
+        (out_h, out_cpp) = handle_fields(fields,
+                'Ponyca::' + upfirst(structure), types)
+        outfile_h += out_h + '\n    };\n'
+        outfile_cpp += out_cpp
+        types[structure] = ('Ponyca::%s' % upfirst(structure), True)
     for opcode in opcodes:
         (opcode, data) = list(opcode.items())[0]
         fields = data['fields']
         name = data['name']
         outfile_h += '\n    class %s : public Packet\n    {' % upfirst(name)
-        size = 0
-        for field in fields:
-            (field, attributes) = list(field.items())[0]
-            (out_h, out_serialize, out_unserialize) = parse_field(field, attributes,
-                    'Ponyca::' + upfirst(name), types, size)
-            size += types[type_][1]
-            outfile_h += out_h
-        outfile_h += '\n        public uint32_t packetSize = %i;' % size
-        outfile_h += '\n        public uint32_t opcode = %s;' % opcode
+        outfile_h += '\n    public:'
+        (out_h, out_cpp) = handle_fields(fields,
+                'Ponyca::' + upfirst(name), types)
+        outfile_cpp += out_cpp
+        outfile_h += out_h
+        outfile_h += '\n        const static uint32_t opcode = %s;' % opcode
         outfile_h += '\n    };\n'
 
     outfile_h += FOOTER_H
