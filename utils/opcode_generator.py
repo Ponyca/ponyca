@@ -10,7 +10,7 @@ HEADER_H = """
 
 #include <stdint.h>
 
-namespace Ponyca::Protocol
+namespace Ponyca
 {
     class Structure
     {
