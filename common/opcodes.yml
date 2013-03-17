@@ -20,6 +20,9 @@ version:
 # block: part of the map, which has a 1x1x1 size.
 # entity: an object that is not a block.
 #
+# size: number of bytes
+# length: number of items (all item have their own size)
+#
 # Format of a packet
 # ------------------
 #
@@ -66,9 +69,10 @@ types:
     uint64:
         type: uint64_t
     string:
-        # Suffixed with a \0 character.
+        # Prefixed with its size (uint16) when serialized
         type: std::string
     msgpack:
+        # Prefixed with its size (uint16) when serialized
         type: msgpack::unpacked
 
     coordinates:
