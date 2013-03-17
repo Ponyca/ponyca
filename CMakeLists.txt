@@ -67,6 +67,13 @@ link_directories(${OPENAL_LINK_DIRS})
 add_definitions(${OPENAL_DEFINITIONS})
 target_link_libraries(client ${OPENAL_LIBRARIES})
 
+# UTF8-CPP
+find_package(UTF8CPP REQUIRED)
+include_directories(${UTF8CPP_INCLUDE_DIRS})
+link_directories(${UTF8CPP_LINK_DIRS})
+add_definitions(${UTF8CPP_DEFINITIONS})
+target_link_libraries(common ${UTF8CPP_LIBRARIES})
+
 # Dynlibs
 set_target_properties(common PROPERTIES LINK_FLAGS "-ldl")
 
