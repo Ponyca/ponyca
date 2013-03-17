@@ -2,9 +2,10 @@ language: cpp
 before_install:
   - sudo yes | sudo add-apt-repository ppa:ubuntu-toolchain-r/test
   - sudo apt-get install -qq gcc-4.7 zlib1g-dev libgl1-mesa-swx11-dev libx11-dev libxext-dev libfreetype6-dev libopenal-dev freeglut3-dev libxmu-dev libxi-dev libmsgpack-dev
+  - sudo mv /usr/bin/gcc-4.7 /usr/bin/gcc
 compiler:
   - clang
-  - gcc-4.7
+  - gcc
 script:
   - mkdir build
   - cd build
