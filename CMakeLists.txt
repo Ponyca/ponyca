@@ -80,3 +80,13 @@ if(UNIX)
         add_definitions(-std=c++11)
     endif(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif(UNIX)
+
+
+# Tests
+find_package(CxxTest REQUIRED)
+include_directories(${CXXTEST_INCLUDE_DIRS})
+link_directories(${CXXTEST_LINK_DIRS})
+add_definitions(${CXXTEST_DEFINITIONS})
+enable_testing()
+cxxtest_add_test(testsrunner test_serialization.cpp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_serialization.cpp)
+target_link_libraries(testsrunner common) # as needed
