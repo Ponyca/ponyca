@@ -90,10 +90,10 @@ types:
     direction:
         type: struct direction # vert, horiz (uint16, uint16)
     structure:
-        type: Ponyca::Structure
+        type: Ponyca::Net::AbstractSerializable&
     list:
         # Prefixed with its length (uint16) when serialized
-        type: std::vector<Ponyca::Structure>
+        type: std::vector<Ponyca::Net::AbstractSerializable>&
 
 aliases:
     # The following are dynamically-attributed identifiers. They start from
@@ -113,11 +113,11 @@ aliases:
 
 structures:
     - block:
-        - type: blockType
-        - variant: blockVariant # Ignored if this block type has no variants
+        - blockType: blockType
+        - blockVariant: blockVariant # Ignored if this block type has no variants
     - placedBlock:
         - id: worldId
-        - position: coordinates
+        - coordinates: coordinates
         - block: block
     - client:
         - id: clientId
@@ -127,7 +127,7 @@ structures:
         - direction: direction
         - name: string
         - playedBy: clientId # 0 means played by AI.
-        - type: entityType
+        - entityType: entityType
         - metadata: msgpack
     - protocolVersion:
         - majorVersion: uint16
