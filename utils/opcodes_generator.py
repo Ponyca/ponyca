@@ -18,7 +18,6 @@ namespace Ponyca
 """
 
 FOOTER_H = """
-}
 
 #endif // PONYCA_PROTOCOL_H
 """
@@ -134,8 +133,14 @@ def main(infile):
                 'Ponyca::' + upfirst(name), types)
         outfile_cpp += out_cpp
         outfile_h += out_h
-        outfile_h += '\n        const static uint32_t opcode = %s;' % opcode
+        outfile_h += '\n        static const uint16_t Opcode = %s;' % opcode
         outfile_h += '\n    };\n'
+    outfile_h += '\n\n}\nenum class Opcodes\n{'
+    for opcode in opcodes:
+        (opcode, data) = list(opcode.items())[0]
+        name = data['name']
+        outfile_h += '\n    %s = %s;' % (name, opcode)
+    outfile_h += '\n};'
 
     outfile_h += FOOTER_H
     outfile_cpp += FOOTER_CPP
