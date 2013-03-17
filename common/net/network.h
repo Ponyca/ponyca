@@ -18,7 +18,41 @@ namespace Ponyca {
         class AbstractSerializable {
         public:
             virtual std::string serialize() const = 0;
-            virtual uint32_t unserialize(std::string const &buffer) = 0;
+            virtual uint16_t unserialize(std::string const &buffer) = 0;
+
+        protected:
+            std::string serializeBool(bool v) const;
+            std::string serializeInt8(int8_t v) const;
+            std::string serializeInt16(int16_t v) const;
+            std::string serializeInt32(int32_t v) const;
+            std::string serializeInt64(int64_t v) const;
+            std::string serializeUInt8(uint8_t v) const;
+            std::string serializeUInt16(uint16_t v) const;
+            std::string serializeUInt32(uint32_t v) const;
+            std::string serializeUInt64(uint64_t v) const;
+            std::string serializeFloat32(float v) const;
+            std::string serializeFloat64(double v) const;
+
+            uint16_t unserializeBool(char const *buffer, bool &member) const;
+            uint16_t unserializeInt8(char const *buffer, int8_t &member) const;
+            uint16_t unserializeInt16(char const *buffer, int16_t &member) const;
+            uint16_t unserializeInt32(char const *buffer, int32_t &member) const;
+            uint16_t unserializeInt64(char const *buffer, int64_t &member) const;
+            uint16_t unserializeUInt8(char const *buffer, uint8_t &member) const;
+            uint16_t unserializeUInt16(char const *buffer, uint16_t &member) const;
+            uint16_t unserializeUInt32(char const *buffer, uint32_t &member) const;
+            uint16_t unserializeUInt64(char const *buffer, uint64_t &member) const;
+            uint16_t unserializeFloat32(char const *buffer, float &member) const;
+            uint16_t unserializeFloat64(char const *buffer, double &member) const;
+        };
+
+        class StringType : public AbstractSerializable {
+        public:
+            virtual std::string serialize() const;
+            virtual uint16_t unserialize(std::string const &buffer);
+
+            uint16_t length;
+            std::wstring string;
         };
 
         class AbstractPacket : public AbstractSerializable {
@@ -33,7 +67,6 @@ namespace Ponyca {
         };
     }
 }
-
 
 
 
