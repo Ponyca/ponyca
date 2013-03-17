@@ -3,15 +3,11 @@
 #include "network.h"
 
 
+
 using namespace Ponyca::Net;
 
 std::string AbstractSerializable::serializeBool(bool v) const {
-    if (v) {
-        return std::string("\0");
-    }
-    else {
-        return std::string("\1");
-    }
+    return std::string(v ? "\1" : "\0");
 }
 
 std::string AbstractSerializable::serializeInt8(int8_t v) const {
@@ -52,6 +48,13 @@ std::string AbstractSerializable::serializeFloat32(float v) const {
 
 std::string AbstractSerializable::serializeFloat64(double v) const {
     return std::string((char*)(&v), 8);
+}
+
+std::string AbstractSerializable::serializeString(std::string const &v) const {
+    std::string buffer;
+    buffer += serializeUint16(v.size());
+    buffer += v;
+    return buffer;
 }
 
 
@@ -110,6 +113,13 @@ uint16_t AbstractSerializable::unserializeFloat64(char const *buffer, double &me
     return 8;
 }
 
+uint16_t AbstractSerializable::unserializeString(char const *buffer, std::string &member) const {
+    uint16_t size;
+    unserializeUint16(buffer, size);
+    member.assign(buffer+2, size);
+
+    return size+2;
+}
 
 
 
