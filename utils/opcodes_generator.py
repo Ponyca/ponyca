@@ -12,7 +12,6 @@ HEADER_H = """
 #include <string>
 #include <vector>
 #include <msgpack.hpp>
-#include "common/typedefs.h"
 #include "common/net/network.h"
 
 namespace Ponyca
