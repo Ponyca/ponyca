@@ -30,19 +30,19 @@ std::string AbstractSerializable::serializeInt64(int64_t v) const {
     return std::string((char*)(&v), 8);
 }
 
-std::string AbstractSerializable::serializeUInt8(uint8_t v) const {
+std::string AbstractSerializable::serializeUint8(uint8_t v) const {
     return std::string((char*)(&v), 1);
 }
 
-std::string AbstractSerializable::serializeUInt16(uint16_t v) const {
+std::string AbstractSerializable::serializeUint16(uint16_t v) const {
     return std::string((char*)(&v), 2);
 }
 
-std::string AbstractSerializable::serializeUInt32(uint32_t v) const {
+std::string AbstractSerializable::serializeUint32(uint32_t v) const {
     return std::string((char*)(&v), 4);
 }
 
-std::string AbstractSerializable::serializeUInt64(uint64_t v) const {
+std::string AbstractSerializable::serializeUint64(uint64_t v) const {
     return std::string((char*)(&v), 8);
 }
 
@@ -80,22 +80,22 @@ uint16_t AbstractSerializable::unserializeInt64(char const *buffer, int64_t &mem
     return 8;
 }
 
-uint16_t AbstractSerializable::unserializeUInt8(char const *buffer, uint8_t &member) const {
+uint16_t AbstractSerializable::unserializeUint8(char const *buffer, uint8_t &member) const {
     memcpy(&member, buffer, 1);
     return 1;
 }
 
-uint16_t AbstractSerializable::unserializeUInt16(char const *buffer, uint16_t &member) const {
+uint16_t AbstractSerializable::unserializeUint16(char const *buffer, uint16_t &member) const {
     memcpy(&member, buffer, 2);
     return 2;
 }
 
-uint16_t AbstractSerializable::unserializeUInt32(char const *buffer, uint32_t &member) const {
+uint16_t AbstractSerializable::unserializeUint32(char const *buffer, uint32_t &member) const {
     memcpy(&member, buffer, 4);
     return 4;
 }
 
-uint16_t AbstractSerializable::unserializeUInt64(char const *buffer, uint64_t &member) const {
+uint16_t AbstractSerializable::unserializeUint64(char const *buffer, uint64_t &member) const {
     memcpy(&member, buffer, 8);
     return 8;
 }
