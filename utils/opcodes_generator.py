@@ -15,17 +15,6 @@ HEADER_H = """
 
 namespace Ponyca
 {
-    class Structure
-    {
-    public:
-        virtual std::string serialize();
-        virtual uint64_t unserialize(const std::string &buffer);
-%s
-    };
-    class Packet : public Structure
-    {
-    };
-
 """
 
 FOOTER_H = """
@@ -108,17 +97,12 @@ def main(infile):
 
     # First, we read all types and declare their associated (un)serialization
     # functions.
-    converters = ''
     for (type_, attributes) in document['types'].items():
         if 'type' in attributes:
             cpptype = attributes['type']
         else:
             cpptype = type_
         types[type_] = (upfirst(type_), cpptype, False)
-        percent = (upfirst(type_), cpptype)
-        converters += '\n        static uint64_t unserialize%s(const std::string&, %s);' % percent
-        converters += '\n        static std::string serialize%s(%s);' % percent
-    outfile_h %= converters
 
     # This is useful for consistency
     for (key, value) in document['aliases'].items():
