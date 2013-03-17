@@ -131,8 +131,8 @@ void ConfigManager::loadFile(std::string const &path) {
         StringUtils::trim(key);
         StringUtils::trim(value);
 
-        if ((value.front() == '"' && value.back() == '"')
-         || (value.front() == '\'' && value.back() == '\'')
+        if (((value.front() == '"' && value.back() == '"')
+             || (value.front() == '\'' && value.back() == '\''))
          && value.length() >= 3) {
             // Remove quotes
             value = value.substr(1, -1);
