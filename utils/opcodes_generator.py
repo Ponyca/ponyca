@@ -116,8 +116,8 @@ def main(infile):
             cpptype = type_
         types[type_] = (upfirst(type_), cpptype, False)
         percent = (upfirst(type_), cpptype)
-        converters += '\n        uint64_t unserialize%s(const std::string&, %s);' % percent
-        converters += '\n        std::string& serialize%s(%s);' % percent
+        converters += '\n        static uint64_t unserialize%s(const std::string&, %s);' % percent
+        converters += '\n        static std::string& serialize%s(%s);' % percent
     outfile_h %= converters
 
     # This is useful for consistency
