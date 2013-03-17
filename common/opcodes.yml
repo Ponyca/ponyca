@@ -1,3 +1,51 @@
+# Specification of Ponyca protocol
+# ================================
+#
+# Version of this specification
+# -----------------------------
+
+version:
+    major: 0
+    minor: 1
+    status: alpha # ie. it may be changed without bumping the version number.
+
+# Vocabulary
+# ----------
+#
+# StC: Server to Client
+# CtS: Client to Server
+# StS: Server to Server (not yet used)
+# CtC: Client to Client (not yet used)
+#
+# block: part of the map, which has a 1x1x1 size.
+# entity: an object that is not a block.
+#
+# Format of a packet
+# ------------------
+#
+# In TCP mode:
+#   opcode|size|content
+# In UDP mode: (not yet used)
+#   opcode|size|checksum|content
+# Details:
+# * opcode (2 bytes): Determines how the content should be interpreted.
+# * size (2 bytes, unsigned): Determines the length of the *content*.
+# * checksum (2 bytes): Calculated with successive XOR on the *content*,
+#   2 bytes per 2 bytes. UDP session should be closed if it does not match.
+# * content (even number of bytes). A \0 is suffixed if size is odd.
+#
+# Handshake
+# ---------
+#
+# On connection, server sends a CONNECT packet to the client. The client
+# should close the connection if it does not have the same majorVersion,
+# and display a warning if it does not have the same minorVersion.
+# If majorVersion and minorVersion match, client should send a LOGIN packet
+# to the server.
+#
+# Data types
+# ----------
+
 types:
     bool:
         type: bool
@@ -18,6 +66,7 @@ types:
     uint64:
         type: uint64_t
     string:
+        # Suffixed with a \0 character.
         type: std::string
     msgpack:
         type: msgpack::unpacked
@@ -31,7 +80,7 @@ types:
     structure:
         type: Ponyca::Structure
     list:
-        # Prefixed with its length (uint64) when serialized
+        # Prefixed with its length (uint16) when serialized
         type: std::vector<Ponyca::Structure>
 
 aliases:
@@ -41,14 +90,19 @@ aliases:
     clientId: uint32
     worldId: uint16
     entityId: uint32
+
+    # The following are defined below
     entityType: uint16
     blockType: uint16
     blockVariant: uint16
 
+# Data structures
+# ---------------
+
 structures:
     - block:
         - type: blockType
-        - variant: blockVariant
+        - variant: blockVariant # Ignored if this block type has no variants
     - placedBlock:
         - id: worldId
         - position: coordinates
@@ -68,6 +122,11 @@ structures:
         - minorVersion: uint16
     - chunk:
         - list: list # 3D-list of "block".
+
+# Opcodes and content of the packet
+# ---------------------------------
+#
+# Of course, the order of packets matters.
 
 opcodes:
     # 0x0***: COMMON
@@ -189,3 +248,32 @@ opcodes:
             - id: entityId
             - key: string
             - value: string
+
+
+# Block/entity types
+# ------------------
+
+blockTypes:
+    # 0x0***: gas
+    - "0x0000":
+        name: air
+        variants:
+    # 0x1***: liquids
+    - "0x1000":
+        name: water
+        variants:
+    # 0x2***: raw materials
+    - "0x2000":
+        name: wood
+        variants:
+            - "0x0000": oak
+            - "0x0001": birch
+    - "0x2001":
+        name: stone
+        variants:
+
+entityTypes:
+    # 0x0***: humanoids
+    - "0x0000": human
+    # 0x1***: animals
+    - "0x1000": pig
