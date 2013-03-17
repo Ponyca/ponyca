@@ -81,7 +81,7 @@ def handle_fields(fields, namespace, types):
         out_h += out_h2
         serialize += out_serialize
         unserialize += out_unserialize
-    out_cpp += serialize + '\n}\n'
+    out_cpp += serialize + '\n    return buffer;\n}\n'
     out_cpp += unserialize + '\n    return size;\n}\n'
     return (out_h, out_cpp)
 
