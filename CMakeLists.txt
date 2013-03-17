@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(ponyca)
-set(EXECUTABLE_OUTPUT_PATH ./build)
-set(LIBRARY_OUTPUT_PATH ./build)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 # Common

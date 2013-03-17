@@ -15,17 +15,6 @@ HEADER_H = """
 
 namespace Ponyca
 {
-    class Structure
-    {
-    public:
-        virtual std::string& serialize();
-        virtual uint64_t unserialize(const std::string &buffer);
-%s
-    };
-    class Packet : public Structure
-    {
-    };
-
 """
 
 FOOTER_H = """
@@ -63,25 +52,24 @@ def parse_field(field, type_, namespace, types):
     out_h += '\n        %s %s;' % (cpp_type, field)
     if is_structure:
         # If the field is a structure, it has its own convertion function...
-        out_serialize = '\n    buffer += %s.serialize();' % field
+        out_serialize = '\n    size += %s.serialize(buffer);' % field
         out_unserialize = '\n    size += %s.unserialize(buffer);' % field
     else:
         # ... otherwise, we have to use the one provided by Ponyca::Structure.
-        out_serialize = '\n    buffer += Ponyca::Structure::serialize%s(%s);' % \
+        out_serialize = '\n    size += Ponyca::Structure::serialize%s(buffer, %s);' % \
                 (realname, field)
-        out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer.substr(size), %s);' % \
+        out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer+size, %s);' % \
                 (realname, field)
     return (out_h, out_serialize, out_unserialize)
 
 def handle_fields(fields, namespace, types):
     """Return the body (ie. the fields) of a Structure and the implementation
     of the serialize() and unserialize() methods of this structure."""
-    out_h = '\n        virtual std::string& serialize();' + \
-            '\n        virtual uint64_t unserialize(const std::string &buffer);'
+    out_h = '\n        virtual uint64_t serialize(char **buffer);' + \
+            '\n        virtual uint64_t unserialize(const char* buffer);'
     out_cpp = ''
-    serialize = '\nstd::string& %s::serialize()\n{' % namespace
-    serialize += '\n    std::string buffer;'
-    unserialize = 'uint64_t %s::unserialize(const std::string &buffer)\n{' % \
+    serialize = '\nuint64_t %s::serialize(char **buffer)\n{' % namespace
+    unserialize = 'uint64_t %s::unserialize(const char *buffer)\n{' % \
             namespace
     unserialize += '\n    uint64_t size = 0;'
     fields = fields or []
@@ -93,7 +81,7 @@ def handle_fields(fields, namespace, types):
         out_h += out_h2
         serialize += out_serialize
         unserialize += out_unserialize
-    out_cpp += serialize + '\n}\n'
+    out_cpp += serialize + '\n    return size;\n}\n'
     out_cpp += unserialize + '\n    return size;\n}\n'
     return (out_h, out_cpp)
 
@@ -108,17 +96,12 @@ def main(infile):
 
     # First, we read all types and declare their associated (un)serialization
     # functions.
-    converters = ''
     for (type_, attributes) in document['types'].items():
         if 'type' in attributes:
             cpptype = attributes['type']
         else:
             cpptype = type_
         types[type_] = (upfirst(type_), cpptype, False)
-        percent = (upfirst(type_), cpptype)
-        converters += '\n        uint64_t unserialize%s(const std::string&, %s);' % percent
-        converters += '\n        std::string& serialize%s(%s);' % percent
-    outfile_h %= converters
 
     # This is useful for consistency
     for (key, value) in document['aliases'].items():
@@ -150,8 +133,14 @@ def main(infile):
                 'Ponyca::' + upfirst(name), types)
         outfile_cpp += out_cpp
         outfile_h += out_h
-        outfile_h += '\n        const static uint32_t opcode = %s;' % opcode
+        outfile_h += '\n        static const uint16_t Opcode = %s;' % opcode
         outfile_h += '\n    };\n'
+    outfile_h += '\n\n    enum class Opcodes\n    {'
+    for opcode in opcodes:
+        (opcode, data) = list(opcode.items())[0]
+        name = data['name']
+        outfile_h += '\n        %s = %s,' % (name, opcode)
+    outfile_h += '\n    };'
 
     outfile_h += FOOTER_H
     outfile_cpp += FOOTER_CPP
