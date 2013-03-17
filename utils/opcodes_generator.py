@@ -18,7 +18,7 @@ namespace Ponyca
     class Structure
     {
     public:
-        virtual std::string& serialize();
+        virtual std::string serialize();
         virtual uint64_t unserialize(const std::string &buffer);
 %s
     };
@@ -76,11 +76,11 @@ def parse_field(field, type_, namespace, types):
 def handle_fields(fields, namespace, types):
     """Return the body (ie. the fields) of a Structure and the implementation
     of the serialize() and unserialize() methods of this structure."""
-    out_h = '\n        virtual std::string& serialize();' + \
+    out_h = '\n        virtual std::string serialize();' + \
             '\n        virtual uint64_t unserialize(const std::string &buffer);'
     out_cpp = ''
-    serialize = '\nstd::string& %s::serialize()\n{' % namespace
-    serialize += '\n    std::string buffer;'
+    serialize = '\nstd::string %s::serialize()\n{' % namespace
+    serialize += '\n    std::string buffer = "";'
     unserialize = 'uint64_t %s::unserialize(const std::string &buffer)\n{' % \
             namespace
     unserialize += '\n    uint64_t size = 0;'
@@ -117,7 +117,7 @@ def main(infile):
         types[type_] = (upfirst(type_), cpptype, False)
         percent = (upfirst(type_), cpptype)
         converters += '\n        static uint64_t unserialize%s(const std::string&, %s);' % percent
-        converters += '\n        static std::string& serialize%s(%s);' % percent
+        converters += '\n        static std::string serialize%s(%s);' % percent
     outfile_h %= converters
 
     # This is useful for consistency
