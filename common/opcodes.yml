@@ -20,6 +20,10 @@ version:
 # block: part of the map, which has a 1x1x1 size.
 # entity: an object that is not a block.
 #
+# coordinates: 3-items array of uint16. Used for blocks.
+# position: 3-items array of float64 (in [-2^31, 2^31]). Used for entities
+# direction: 2-items array of uint16, in hundredths of a degree. Used for entities
+#
 # size: number of bytes
 # length: number of items (all item have their own size)
 #
@@ -68,6 +72,10 @@ types:
         type: uint32_t
     uint64:
         type: uint64_t
+    float32:
+        type: float
+    float64:
+        type: double
     string:
         # Prefixed with its size (uint16) when serialized
         type: std::string
@@ -76,16 +84,16 @@ types:
         type: msgpack::unpacked
 
     coordinates:
-        type: struct coordinates
+        type: struct coordinates # x,y,z (uint16, uint16, uint16)
     position:
-        type: struct position
+        type: struct position # x,y,z (float64, float64, float64)
     direction:
-        type: struct direction
+        type: struct direction # vert, horiz (uint16, uint16)
     structure:
-        type: Ponyca::Structure
+        type: Ponyca::Net::AbstractSerializable&
     list:
         # Prefixed with its length (uint16) when serialized
-        type: std::vector<Ponyca::Structure>
+        type: std::vector<Ponyca::Net::AbstractSerializable>&
 
 aliases:
     # The following are dynamically-attributed identifiers. They start from
@@ -105,11 +113,11 @@ aliases:
 
 structures:
     - block:
-        - type: blockType
-        - variant: blockVariant # Ignored if this block type has no variants
+        - blockType: blockType
+        - blockVariant: blockVariant # Ignored if this block type has no variants
     - placedBlock:
         - id: worldId
-        - position: coordinates
+        - coordinates: coordinates
         - block: block
     - client:
         - id: clientId
@@ -119,7 +127,7 @@ structures:
         - direction: direction
         - name: string
         - playedBy: clientId # 0 means played by AI.
-        - type: entityType
+        - entityType: entityType
         - metadata: msgpack
     - protocolVersion:
         - majorVersion: uint16

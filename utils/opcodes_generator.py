@@ -12,20 +12,11 @@ HEADER_H = """
 #include <string>
 #include <vector>
 #include <msgpack.hpp>
+#include "common/typedefs.h"
+#include "common/net/network.h"
 
 namespace Ponyca
 {
-    class Structure
-    {
-    public:
-        virtual std::string& serialize();
-        virtual uint64_t unserialize(const std::string &buffer);
-%s
-    };
-    class Packet : public Structure
-    {
-    };
-
 """
 
 FOOTER_H = """
@@ -66,34 +57,42 @@ def parse_field(field, type_, namespace, types):
         out_serialize = '\n    buffer += %s.serialize();' % field
         out_unserialize = '\n    size += %s.unserialize(buffer);' % field
     else:
-        # ... otherwise, we have to use the one provided by Ponyca::Structure.
-        out_serialize = '\n    buffer += Ponyca::Structure::serialize%s(%s);' % \
+        # ... otherwise, we have to use the one provided by Ponyca::Net::AbstractSerializable.
+        out_serialize = '\n    buffer += Ponyca::Net::AbstractSerializable::serialize%s(%s);' % \
                 (realname, field)
-        out_unserialize = '\n    size += Ponyca::Structure::unserialize%s(buffer.substr(size), %s);' % \
+        out_unserialize = '\n    size += Ponyca::Net::AbstractSerializable::unserialize%s(buffer+size, %s);' % \
                 (realname, field)
     return (out_h, out_serialize, out_unserialize)
 
-def handle_fields(fields, namespace, types):
+def handle_fields(fields, namespace, class_, types):
     """Return the body (ie. the fields) of a Structure and the implementation
     of the serialize() and unserialize() methods of this structure."""
-    out_h = '\n        virtual std::string& serialize();' + \
-            '\n        virtual uint64_t unserialize(const std::string &buffer);'
+    out_h = '\n        %s(%%s);' % class_ + \
+            '\n        virtual std::string serialize();' + \
+            '\n        virtual uint64_t unserialize(const char* buffer);'
     out_cpp = ''
-    serialize = '\nstd::string& %s::serialize()\n{' % namespace
-    serialize += '\n    std::string buffer;'
-    unserialize = 'uint64_t %s::unserialize(const std::string &buffer)\n{' % \
+    serialize = '\nstd::string %s::serialize()\n{\n    std::string buffer = "";' % namespace
+    unserialize = 'uint64_t %s::unserialize(const char *buffer)\n{' % \
             namespace
     unserialize += '\n    uint64_t size = 0;'
     fields = fields or []
+    constructor = '\n\n%s::%s(%%s) ' % (namespace, class_)
+    if fields:
+        constructor += ': '
+    constructor_params = []
     for field in fields:
         # This is the only way yaml allows us to access those data.
         (field, type_) = list(field.items())[0]
+        constructor += '\n        %s(%s),' % (field, field)
+        constructor_params.append('%s %s' % (types[type_][1], field))
         (out_h2, out_serialize, out_unserialize) = parse_field(field, type_,
                 namespace, types)
         out_h += out_h2
         serialize += out_serialize
         unserialize += out_unserialize
-    out_cpp += serialize + '\n}\n'
+    out_h %= ', '.join(constructor_params)
+    out_cpp += constructor[0:-1] % (', '.join(constructor_params)) + '\n{\n}'
+    out_cpp += serialize + '\n    return buffer;\n}\n'
     out_cpp += unserialize + '\n    return size;\n}\n'
     return (out_h, out_cpp)
 
@@ -108,17 +107,12 @@ def main(infile):
 
     # First, we read all types and declare their associated (un)serialization
     # functions.
-    converters = ''
     for (type_, attributes) in document['types'].items():
         if 'type' in attributes:
             cpptype = attributes['type']
         else:
             cpptype = type_
         types[type_] = (upfirst(type_), cpptype, False)
-        percent = (upfirst(type_), cpptype)
-        converters += '\n        uint64_t unserialize%s(const std::string&, %s);' % percent
-        converters += '\n        std::string& serialize%s(%s);' % percent
-    outfile_h %= converters
 
     # This is useful for consistency
     for (key, value) in document['aliases'].items():
@@ -131,27 +125,33 @@ def main(infile):
         (structure, fields) = list(structure.items())[0]
         if not isinstance(fields, list):
             raise InvalidSyntax('Fields of structure %r is not a list' % structure)
-        outfile_h += '\n    class %s : public Structure\n    {' % upfirst(structure)
+        outfile_h += '\n    class %s : public Net::AbstractSerializable\n    {' % upfirst(structure)
         outfile_h += '\n    public:'
         (out_h, out_cpp) = handle_fields(fields,
-                'Ponyca::' + upfirst(structure), types)
+                'Ponyca::' + upfirst(structure), upfirst(structure), types)
         outfile_h += out_h + '\n    };\n'
         outfile_cpp += out_cpp
-        types[structure] = (upfirst(structure), 'Ponyca::%s' % upfirst(structure), True)
+        types[structure] = (upfirst(structure), 'Ponyca::%s&' % upfirst(structure), True)
 
     # Finally, we do the same to opcodes.
     for opcode in opcodes:
         (opcode, data) = list(opcode.items())[0]
         fields = data['fields']
         name = data['name']
-        outfile_h += '\n    class %s : public Packet\n    {' % upfirst(name)
+        outfile_h += '\n    class %s : public Net::AbstractPacket\n    {' % upfirst(name)
         outfile_h += '\n    public:'
         (out_h, out_cpp) = handle_fields(fields,
-                'Ponyca::' + upfirst(name), types)
+                'Ponyca::' + upfirst(name), upfirst(name), types)
         outfile_cpp += out_cpp
         outfile_h += out_h
-        outfile_h += '\n        const static uint32_t opcode = %s;' % opcode
+        outfile_h += '\n        static const uint16_t Opcode = %s;' % opcode
         outfile_h += '\n    };\n'
+    outfile_h += '\n\n    enum class Opcodes\n    {'
+    for opcode in opcodes:
+        (opcode, data) = list(opcode.items())[0]
+        name = data['name']
+        outfile_h += '\n        %s = %s,' % (name, opcode)
+    outfile_h += '\n    };'
 
     outfile_h += FOOTER_H
     outfile_cpp += FOOTER_CPP
