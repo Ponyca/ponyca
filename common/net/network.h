@@ -64,33 +64,6 @@ namespace Ponyca {
             // receive
         };
 
-        template<typename T>
-        std::string AbstractSerializable::serializeList(std::vector<T> const &v) const {
-            std::string buffer;
-            buffer += serializeUint16(v.size());
-
-            typename std::vector<T>::const_iterator it;
-            for(it=v.begin(); it!=v.end(); it++) {
-                std::string serialized(it->serialize());
-                buffer += serialized;
-            }
-            return buffer;
-        }
-
-        template<typename T>
-        uint16_t AbstractSerializable::unserializeList(char const *buffer, std::vector<T> &member) const {
-            uint16_t size, i, offset = 0;
-            unserializeUint16(buffer, size);
-
-            for(i=0; i<size; i++) {
-                T obj;
-
-                offset += obj.unserialize(buffer + 2 + offset);
-                member.push_back(obj);
-            }
-
-            return 2 + offset;
-        }
     }
 }
 
