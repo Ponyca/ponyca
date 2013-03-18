@@ -11,11 +11,10 @@ public:
         buffer += serializeFloat32(fieldFloat);
         return buffer;
     }
-    virtual uint16_t unserialize(std::string const &buffer) {
-        char const *cstr = buffer.c_str();
+    virtual uint16_t unserialize(const char *buffer) {
         uint16_t offset = 0;
-        offset += unserializeInt32(cstr+offset, fieldInt);
-        offset += unserializeFloat32(cstr+offset, fieldFloat);
+        offset += unserializeInt32(buffer+offset, fieldInt);
+        offset += unserializeFloat32(buffer+offset, fieldFloat);
         return offset;
     }
      
@@ -32,7 +31,7 @@ public:
         t.fieldInt = 42;
         t.fieldFloat = 13.37;
 
-        std::string serialized(t.serialize());
+        const char *serialized(t.serialize().c_str());
 
         TestType t2;
         t2.unserialize(serialized);
