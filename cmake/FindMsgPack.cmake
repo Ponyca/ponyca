@@ -19,7 +19,6 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(MsgPack DEFAULT_MSG MsgPack_LIBRARY MsgPack_IN
 
 # Copy the results to the output variables.
 IF(MSGPACK_FOUND)
-  MESSAGE("MsgPack found")
   SET(MsgPack_LIBRARIES ${MsgPack_LIBRARY})
   SET(MsgPack_INCLUDE_DIRS ${MsgPack_INCLUDE_DIR})
 ELSE(MSGPACK_FOUND)
