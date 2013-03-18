@@ -79,9 +79,6 @@ types:
     string:
         # Prefixed with its size (uint16) when serialized
         type: std::string
-    msgpack:
-        # Prefixed with its size (uint16) when serialized
-        type: msgpack::unpacked
 
     structure:
         type: Ponyca::Net::AbstractSerializable&
@@ -134,7 +131,7 @@ structures:
         - name: string
         - playedBy: clientId # 0 means played by AI.
         - entityType: entityType
-        - metadata: msgpack
+        - metadata: list # of strings: key1|value1|key2|value2
     - protocolVersion:
         - majorVersion: uint16
         - minorVersion: uint16
@@ -154,7 +151,7 @@ opcodes:
         name: connect
         fields:
             - protocol: protocolVersion
-            - extensions: msgpack
+            - extensions: list # of strings
     - "0x0001":
         name: login
         fields:
