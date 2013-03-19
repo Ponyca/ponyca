@@ -39,6 +39,13 @@ link_directories(${MSGPACK_LINK_DIRS})
 add_definitions(${MSGPACK_DEFINITIONS})
 target_link_libraries(common ${MSGPACK_LIBRARIES})
 
+# ASIO
+find_package(ASIO REQUIRED)
+include_directories(${ASIO_INCLUDE_DIRS})
+link_directories(${ASIO_LINK_DIRS})
+add_definitions(${ASIO_DEFINITIONS})
+target_link_libraries(common ${ASIO_LIBRARIES})
+
 # OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})
