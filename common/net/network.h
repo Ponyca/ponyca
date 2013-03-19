@@ -66,9 +66,8 @@ namespace Ponyca {
         class AbstractRouter {
         public:
             virtual void send(AbstractPacket const &packet, int32_t sessid) = 0;
-            // receive
+            virtual void sendAll(AbstractPacket const &packet) = 0;
         };
-
 
 
         template<typename T>
