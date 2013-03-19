@@ -6,17 +6,17 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 # Common
 file(GLOB_RECURSE common_sources common/*.cpp)
-include_directories(common/)
+include_directories(common/ ${CMAKE_SOURCE_DIR})
 add_library(common SHARED ${common_sources})
 
 # Client
 file(GLOB_RECURSE client_sources client/*.cpp)
-include_directories(client/ common/)
+include_directories(client/ ${CMAKE_SOURCE_DIR})
 add_executable(client ${client_sources})
 
 # Server
 file(GLOB_RECURSE server_sources server/*.cpp)
-include_directories(server/ common/)
+include_directories(server/ ${CMAKE_SOURCE_DIR})
 add_executable(server ${server_sources})
 
 #add_subdirectory(plugins)
@@ -45,6 +45,11 @@ include_directories(${ASIO_INCLUDE_DIRS})
 link_directories(${ASIO_LINK_DIRS})
 add_definitions(${ASIO_DEFINITIONS})
 target_link_libraries(common ${ASIO_LIBRARIES})
+
+# Threads
+set(CMAKE_THREAD_PREFER_PTHREAD)
+find_package(Threads REQUIRED)
+target_link_libraries(common ${CMAKE_THREAD_LIBS_INIT})
 
 # OpenGL
 find_package(OpenGL REQUIRED)
