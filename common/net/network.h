@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace Ponyca {
     namespace Net {
@@ -36,6 +37,8 @@ namespace Ponyca {
             std::string serializeString(std::string const &v) const;
             template<typename T>
             std::string serializeList(std::vector<T> const &v) const;
+            template<typename T>
+            std::string serializeMap(std::map<std::string, T> const &v) const;
 
             uint16_t unserializeBool(char const *buffer, bool &member) const;
             uint16_t unserializeInt8(char const *buffer, int8_t &member) const;
@@ -51,6 +54,8 @@ namespace Ponyca {
             uint16_t unserializeString(char const *buffer, std::string &member) const;
             template<typename T>
             uint16_t unserializeList(char const *buffer, std::vector<T> &member) const;
+            template<typename T>
+            uint16_t unserializeMap(char const *buffer, std::map<std::string, T> &member) const;
         };
 
         class AbstractPacket : public AbstractSerializable {
@@ -63,6 +68,64 @@ namespace Ponyca {
             virtual void send(AbstractPacket const &packet, int32_t sessid) = 0;
             // receive
         };
+
+
+
+        template<typename T>
+        std::string AbstractSerializable::serializeList(std::vector<T> const &v) const {
+            std::string buffer;
+            buffer += serializeUint16(v.size());
+
+            typename std::vector<T>::const_iterator it;
+            for(it=v.begin(); it!=v.end(); it++) {
+                buffer += it->serialize();
+            }
+            return buffer;
+        }
+
+        template<typename T>
+        std::string AbstractSerializable::serializeMap(std::map<std::string, T> const &v) const {
+            std::string buffer;
+            buffer += serializeUint16(v.size());
+
+            typename std::map<std::string, T>::const_iterator it;
+            for(it=v.begin(); it!=v.end(); it++) {
+                buffer += serializeString(it->first);
+                buffer += it->second.serialize();
+            }
+            return buffer;
+        }
+
+        template<typename T>
+        uint16_t AbstractSerializable::unserializeList(char const *buffer, std::vector<T> &member) const {
+            uint16_t size, i, offset = 0;
+            unserializeUint16(buffer, size);
+
+            for(i=0; i<size; i++) {
+                T obj;
+
+                offset += obj.unserialize(buffer + 2 + offset);
+                member.push_back(obj);
+            }
+
+            return 2 + offset;
+        }
+
+        template<typename T>
+        uint16_t AbstractSerializable::unserializeMap(char const *buffer, std::map<std::string, T> &member) const {
+            uint16_t size, i, offset = 0;
+            std::string key;
+            offset += unserializeUint16(buffer, size);
+
+            for(i=0; i<size; i++) {
+                T obj;
+                offset += unserializeString(buffer+offset, key);
+                offset += obj.unserialize(buffer+offset);
+                member[key] = obj;
+            }
+
+            return 2 + offset;
+        }
 
     }
 }
