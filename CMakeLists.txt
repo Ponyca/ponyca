@@ -32,13 +32,6 @@ link_directories(${ZLIB_LINK_DIRS})
 add_definitions(${ZLIB_DEFINITIONS})
 target_link_libraries(common ${ZLIB_LIBRARIES})
 
-# MsgPack
-find_package(MsgPack REQUIRED)
-include_directories(${MSGPACK_INCLUDE_DIRS})
-link_directories(${MSGPACK_LINK_DIRS})
-add_definitions(${MSGPACK_DEFINITIONS})
-target_link_libraries(common ${MSGPACK_LIBRARIES})
-
 # ASIO
 find_package(ASIO REQUIRED)
 include_directories(${ASIO_INCLUDE_DIRS})
