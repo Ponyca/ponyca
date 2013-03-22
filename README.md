@@ -7,7 +7,7 @@ Dependencies
 On Debian:
 
 ```
-sudo aptitude install zlib1g-dev libgl1-mesa-swx11-dev libx11-dev libxext-dev libfreetype6-dev libopenal-dev freeglut3-dev libxmu-dev libxi-dev cxxtest
+sudo aptitude install zlib1g-dev libgl1-mesa-swx11-dev libx11-dev libxext-dev libfreetype6-dev libopenal-dev freeglut3-dev libxmu-dev libxi-dev cxxtest libasio-dev
 ```
 
 How to download the source code
