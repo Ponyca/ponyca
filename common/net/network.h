@@ -97,10 +97,10 @@ namespace Ponyca {
 
         template<typename T>
         uint16_t AbstractSerializable::unserializeList(char const *buffer, std::vector<T> &member) const {
-            uint16_t size, i, offset = 0;
-            unserializeUint16(buffer, size);
+            uint16_t length, i, offset = 0;
+            unserializeUint16(buffer, length);
 
-            for(i=0; i<size; i++) {
+            for(i=0; i<length; i++) {
                 T obj;
 
                 offset += obj.unserialize(buffer + 2 + offset);
