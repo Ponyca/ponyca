@@ -88,6 +88,10 @@ namespace Ponyca {
             return *m_Loggers[key];
         }
 
+        static void SetLogger(std::string const &key, Logger& logger) {
+            m_Loggers[key] = &logger;
+        }
+
         static void DeleteLogger(std::string const &key) {
             m_Loggers.erase(key);
         }

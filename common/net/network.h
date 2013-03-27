@@ -17,12 +17,18 @@ namespace Ponyca {
             {}
         };
 
+        class UnserializeError : public std::exception {};
+
         class AbstractSerializable {
         public:
             virtual std::string serialize() const = 0;
             virtual uint16_t unserialize(char const * buffer) = 0;
+            void setBufferEnd(char const *endptr);
 
         protected:
+            char const *m_unserializeBufferEnd;
+            void checkEndBuffer(char const *ptr) const;
+
             std::string serializeBool(bool v) const;
             std::string serializeInt8(int8_t v) const;
             std::string serializeInt16(int16_t v) const;
@@ -60,12 +66,24 @@ namespace Ponyca {
 
         class AbstractPacket : public AbstractSerializable {
         public:
-            static const uint16_t Opcode;
+            AbstractPacket(uint16_t opcode_)
+                : opcode(opcode_)
+            {}
+            const uint16_t opcode;
+
+        };
+
+        class TCPPacketHeader : public AbstractSerializable {
+        public:
+            virtual std::string serialize() const;
+            virtual uint16_t unserialize(const char *buffer);
+            uint16_t opcode;
+            uint16_t length;
         };
 
         class AbstractRouter {
         public:
-            virtual void send(AbstractPacket const &packet, int32_t sessid) = 0;
+            //virtual void send(AbstractPacket const &packet, int32_t sessid) = 0;
             virtual void sendAll(AbstractPacket const &packet) = 0;
         };
 
@@ -102,7 +120,7 @@ namespace Ponyca {
 
             for(i=0; i<length; i++) {
                 T obj;
-
+                obj.setBufferEnd(m_unserializeBufferEnd);
                 offset += obj.unserialize(buffer + 2 + offset);
                 member.push_back(obj);
             }
@@ -118,6 +136,7 @@ namespace Ponyca {
 
             for(i=0; i<size; i++) {
                 T obj;
+                obj.setBufferEnd(m_unserializeBufferEnd);
                 offset += unserializeString(buffer+offset, key);
                 offset += obj.unserialize(buffer+offset);
                 member[key] = obj;
