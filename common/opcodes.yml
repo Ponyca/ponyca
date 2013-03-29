@@ -104,9 +104,9 @@ aliases:
 
 structures:
     - coordinates:
-        - x: uint16
-        - y: uint16
-        - z: uint16
+        - x: uint32
+        - y: uint32
+        - z: uint32
     - position:
         - x: float64
         - y: float64

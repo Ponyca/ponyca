@@ -17,7 +17,7 @@ public:
     virtual std::string serialize() const {
         return "";
     }
-    virtual uint16_t unserialize(char const * buffer) {
+    virtual uint16_t unserialize(char const *buffer) {
         return 0;
     }
 };

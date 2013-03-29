@@ -86,6 +86,11 @@ if(UNIX)
     endif(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif(UNIX)
 
+# Opcodes generator
+add_custom_target(opcodes COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/utils/opcodes_generator.py" "${CMAKE_CURRENT_SOURCE_DIR}/common/opcodes.yml" "${CMAKE_SOURCE_DIR}/build/opcodes.h" "${CMAKE_SOURCE_DIR}/build/opcodes.cpp"
+    COMMENT "Generating opcodes..."
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+add_dependencies(common opcodes)
 
 # Tests
 find_package(CxxTest REQUIRED)
