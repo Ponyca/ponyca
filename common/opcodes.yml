@@ -126,6 +126,7 @@ structures:
         - id: clientId
     - entity:
         - id: entityId
+        - world: worldId
         - position: position
         - direction: direction
         - name: string
