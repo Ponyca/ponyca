@@ -151,6 +151,7 @@ opcodes:
         name: connect
         fields:
             - protocol: protocolVersion
+            - clientId: clientId
             - extensions: list # of strings
     - "0x0001":
         name: login
