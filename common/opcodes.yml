@@ -137,7 +137,7 @@ structures:
         - majorVersion: uint16
         - minorVersion: uint16
     - chunk:
-        - list: list # 3D-list of "block".
+        - list: list # 3D-list of "block" (size: 100*100*100).
 
 
 # Opcodes and content of the packet
