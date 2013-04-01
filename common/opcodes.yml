@@ -148,40 +148,40 @@ structures:
 opcodes:
     # 0x0***: COMMON
     ## 0x00**: CONNECTION
-    - "0x0000":
+    "0x0000":
         name: connect
         fields:
             - protocol: protocolVersion
             - clientId: clientId
             - extensions: list # of strings
-    - "0x0001":
+    "0x0001":
         name: login
         fields:
             - username: string
             - password: string
-    - "0x0002":
+    "0x0002":
         name: ping
         fields:
             - id: uint32
     ## 0x01**: CLIENTS
-    - "0x0100":
+    "0x0100":
         name: requestClientList
         fields:
-    - "0x0101":
+    "0x0101":
         name: clientList
         fields:
             - list: list
-    - "0x0102":
+    "0x0102":
         name: getClientToClientAddresses
         fields:
             - list: list
-    - "0x0103":
+    "0x0103":
         name: closeConnection # or kick
         fields:
             - clientId: clientId
             - reason: string
     ## 0x02**: MESSAGING
-    - "0x0200":
+    "0x0200":
         name: message
         fields:
             - author: clientId # 0 means it's a server message.
@@ -189,78 +189,78 @@ opcodes:
 
     # 0x1*** MAP
     ## 0x10** WORLDS
-    - "0x1000":
+    "0x1000":
         name: worldCreation
         fields:
             - id: worldId
             - name: string
-    - "0x1001":
+    "0x1001":
         name: worldDestruction
         fields:
             - id: worldId
-    - "0x1002": # Not used. Reserved for consistency.
+    "0x1002": # Not used. Reserved for consistency.
         name: worldUpdate
         fields:
-    - "0x1003":
+    "0x1003":
         name: worldsListRequest
         fields:
-    - "0x1004":
+    "0x1004":
         name: worldsList
         fields:
             - list: list
 
     ## 0x11**: BLOCKS
-    - "0x1100": # Not used. Reserved for consistency.
+    "0x1100": # Not used. Reserved for consistency.
         name: blockSpawn
         fields:
-    - "0x1101": # Not used. Reserved for consistency.
+    "0x1101": # Not used. Reserved for consistency.
         name: blockDestruction 
         fields:
-    - "0x1102":
+    "0x1102":
         name: blockUpdate
         fields:
             - block: placedBlock
-    - "0x1103":
+    "0x1103":
         name: chunkRequest
         fields:
             - coordinates: coordinates # Coordinates of any block in the chunk
-    - "0x1104":
+    "0x1104":
         name: chunkUpdate
         fields:
             - coordinates: coordinates # Coordinates of the first block of the chunl
             - chunk: chunk
     
     ## 0x12**: ENTITIES
-    - "0x1200":
+    "0x1200":
         name: entitySpawn
         fields:
             - entity: entity
-    - "0x1201":
+    "0x1201":
         name: entityDestruction
         fields:
             - id: entityId
-    - "0x1202":
+    "0x1202":
         name: entityUpdate
         fields:
             - entity: entity
-    - "0x1203":
+    "0x1203":
         name: entityListRequest
         fields:
-    - "0x1204":
+    "0x1204":
         name: entityList
         fields:
             - list: list # List of entities
-    - "0x1205":
+    "0x1205":
         name: entityMove
         fields:
             - id: entityId
             - newPosition: position
-    - "0x1206":
+    "0x1206":
         name: entityDirection
         fields:
             - id: entityId
             - newDirection: direction
-    - "0x1207": # Used for updating only one key-value pair
+    "0x1207": # Used for updating only one key-value pair
         name: entityUpdateMetada
         fields:
             - id: entityId
@@ -273,25 +273,25 @@ opcodes:
 
 blockTypes:
     # 0x0***: gas
-    - "0x0000":
+    "0x0000":
         name: air
         variants:
     # 0x1***: liquids
-    - "0x1000":
+    "0x1000":
         name: water
         variants:
     # 0x2***: raw materials
-    - "0x2000":
+    "0x2000":
         name: wood
         variants:
-            - "0x0000": oak
-            - "0x0001": birch
-    - "0x2001":
+            "0x0000": oak
+            "0x0001": birch
+    "0x2001":
         name: stone
         variants:
 
 entityTypes:
     # 0x0***: humanoids
-    - "0x0000": human
+    "0x0000": human
     # 0x1***: animals
-    - "0x1000": pig
+    "0x1000": pig

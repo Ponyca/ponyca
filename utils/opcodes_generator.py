@@ -132,8 +132,7 @@ def main(infile):
 
     # Finally, we do the same to opcodes.
     outfile_h += '\n\n    namespace Packets {'
-    for opcode in opcodes:
-        (opcode, data) = list(opcode.items())[0]
+    for (opcode, data) in opcodes.items():
         fields = data['fields']
         name = data['name']
         outfile_h += '\n        class %s : public Net::AbstractPacket {' % upfirst(name)
@@ -146,8 +145,7 @@ def main(infile):
         outfile_h += '\n        };\n'
     outfile_h += '\n    }'
     outfile_h += '\n\n    enum class Opcodes {'
-    for opcode in opcodes:
-        (opcode, data) = list(opcode.items())[0]
+    for (opcode, data) in opcodes.items():
         name = data['name']
         outfile_h += '\n        %s = %s,' % (name, opcode)
     outfile_h += '\n    };'
