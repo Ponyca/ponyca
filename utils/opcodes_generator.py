@@ -14,9 +14,11 @@ HEADER_H = """
 #include "common/net/network.h"
 
 namespace Ponyca {
+namespace Net {
 """
 
 FOOTER_H = """
+}
 }
 
 #endif // PONYCA_PROTOCOL_H
@@ -141,10 +143,10 @@ def main(infile):
         outfile_h += '\n    class %s : public Net::AbstractSerializable {' % upfirst(structure)
         outfile_h += '\n    public:'
         (out_h, out_cpp) = handle_fields(fields,
-                'Ponyca::' + upfirst(structure), upfirst(structure), types, '        ')
+                'Ponyca::Net::' + upfirst(structure), upfirst(structure), types, '        ')
         outfile_h += out_h + '\n    };\n'
         outfile_cpp += out_cpp
-        types[structure] = (upfirst(structure), 'Ponyca::%s' % upfirst(structure), True)
+        types[structure] = (upfirst(structure), 'Ponyca::Net::%s' % upfirst(structure), True)
 
     # Finally, we do the same to opcodes.
     outfile_h += '\n\n    namespace Packets {'
@@ -154,7 +156,7 @@ def main(infile):
         outfile_h += '\n        class %s : public Net::AbstractPacket {' % upfirst(name)
         outfile_h += '\n        public:'
         (out_h, out_cpp) = handle_fields(fields,
-                'Ponyca::Packets::' + upfirst(name), upfirst(name), types,
+                'Ponyca::Net::Packets::' + upfirst(name), upfirst(name), types,
                 '            ', 'AbstractPacket(%s) '%opcode)
         outfile_cpp += out_cpp
         outfile_h += out_h
@@ -166,6 +168,16 @@ def main(infile):
         name = data['name']
         outfile_h += '\n        %s = %s,' % (name, opcode)
     outfile_h += '\n    };'
+
+    # We implement makePacket(opcode)
+    outfile_cpp += '\n\nPonyca::Net::AbstractPacket* Ponyca::Net::makePacket(int16_t opcode) {'
+    outfile_cpp += '\n    switch(opcode) {'
+    for (opcode, data) in opcodes.items():
+        name = data['name']
+        outfile_cpp += '\n    case %s: return new Ponyca::Net::Packets::%s;' % (opcode, upfirst(name))
+    outfile_cpp += '\n    default: return NULL;'
+    outfile_cpp += '\n    }'
+    outfile_cpp += '\n}'
 
     outfile_h += FOOTER_H
     outfile_cpp += FOOTER_CPP
