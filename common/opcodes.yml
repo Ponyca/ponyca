@@ -55,36 +55,38 @@ version:
 
 types:
     bool:
-        type: bool
+        type: Ponyca::Net::BoolWrapper
     int8:
-        type: int8_t
+        type: Ponyca::Net::Int8Wrapper
     int16:
-        type: int16_t
+        type: Ponyca::Net::Int16Wrapper
     int32:
-        type: int32_t
+        type: Ponyca::Net::Int32Wrapper
     int64:
-        type: int64_t
+        type: Ponyca::Net::Int64Wrapper
     uint8:
-        type: uint8_t
+        type: Ponyca::Net::Uint8Wrapper
     uint16:
-        type: uint16_t
+        type: Ponyca::Net::Uint16Wrapper
     uint32:
-        type: uint32_t
+        type: Ponyca::Net::Uint32Wrapper
     uint64:
-        type: uint64_t
+        type: Ponyca::Net::Uint64Wrapper
     float32:
-        type: float
+        type: Ponyca::Net::Float32Wrapper
     float64:
-        type: double
+        type: Ponyca::Net::Float64Wrapper
     string:
         # Prefixed with its size (uint16) when serialized
-        type: std::string
+        type: Ponyca::Net::String
 
     structure:
         type: Ponyca::Net::AbstractSerializable&
     list:
         # Prefixed with its length (uint16) when serialized
-        type: std::vector<Ponyca::Net::AbstractSerializable>&
+        type: Ponyca::Net::List
+    dynmap:
+        type: Ponyca::Net::DynMap
 
 aliases:
     # The following are dynamically-attributed identifiers. They start from
@@ -132,12 +134,12 @@ structures:
         - name: string
         - playedBy: clientId # 0 means played by AI.
         - entityType: entityType
-        - metadata: list # of strings: key1|value1|key2|value2
+        - metadata: dynmap # of strings: key1|value1|key2|value2
     - protocolVersion:
         - majorVersion: uint16
         - minorVersion: uint16
     - chunk:
-        - list: list # 3D-list of "block" (size: 100*100*100).
+        - list: list:uint8 # 3D-list of "block" (size: 100*100*100).
 
 
 # Opcodes and content of the packet
@@ -153,7 +155,7 @@ opcodes:
         fields:
             - protocol: protocolVersion
             - clientId: clientId
-            - extensions: list # of strings
+            - extensions: list:string # of strings
     "0x0001":
         name: login
         fields:
@@ -170,11 +172,11 @@ opcodes:
     "0x0101":
         name: clientList
         fields:
-            - list: list
+            - list: list:uint32
     "0x0102":
         name: getClientToClientAddresses
         fields:
-            - list: list
+            - list: list:string
     "0x0103":
         name: closeConnection # or kick
         fields:
@@ -207,7 +209,7 @@ opcodes:
     "0x1004":
         name: worldsList
         fields:
-            - list: list
+            - list: list:string
 
     ## 0x11**: BLOCKS
     "0x1100": # Not used. Reserved for consistency.
@@ -230,7 +232,7 @@ opcodes:
             - coordinates: coordinates # Coordinates of the first block of the chunl
             - chunk: chunk
     
-    ## 0x12**: ENTITIES
+    ## 0x12**: ENTITIES
     "0x1200":
         name: entitySpawn
         fields:
@@ -249,7 +251,7 @@ opcodes:
     "0x1204":
         name: entityList
         fields:
-            - list: list # List of entities
+            - list: list:entity # List of entities
     "0x1205":
         name: entityMove
         fields:

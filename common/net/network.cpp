@@ -14,145 +14,107 @@ void AbstractSerializable::checkEndBuffer(char const *ptr) const {
     }
 }
 
-std::string AbstractSerializable::serializeBool(bool v) const {
-    return std::string(v ? "\1" : "\0");
-}
-
-std::string AbstractSerializable::serializeInt8(int8_t v) const {
-    return std::string((char*)(&v), 1);
-}
-
-std::string AbstractSerializable::serializeInt16(int16_t v) const {
-    return std::string((char*)(&v), 2);
-}
-
-std::string AbstractSerializable::serializeInt32(int32_t v) const {
-    return std::string((char*)(&v), 4);
-}
-
-std::string AbstractSerializable::serializeInt64(int64_t v) const {
-    return std::string((char*)(&v), 8);
-}
-
-std::string AbstractSerializable::serializeUint8(uint8_t v) const {
-    return std::string((char*)(&v), 1);
-}
-
-std::string AbstractSerializable::serializeUint16(uint16_t v) const {
-    return std::string((char*)(&v), 2);
-}
-
-std::string AbstractSerializable::serializeUint32(uint32_t v) const {
-    return std::string((char*)(&v), 4);
-}
-
-std::string AbstractSerializable::serializeUint64(uint64_t v) const {
-    return std::string((char*)(&v), 8);
-}
-
-std::string AbstractSerializable::serializeFloat32(float v) const {
-    return std::string((char*)(&v), 4);
-}
-
-std::string AbstractSerializable::serializeFloat64(double v) const {
-    return std::string((char*)(&v), 8);
-}
-
-std::string AbstractSerializable::serializeString(std::string const &v) const {
-    std::string buffer;
-    buffer += serializeUint16(v.size());
-    buffer += v;
-    return buffer;
-}
-
-
-uint16_t AbstractSerializable::unserializeBool(char const *buffer, bool &member) const {
-    checkEndBuffer(buffer);
-    member = buffer[0] != 0;
-    return 1;
-}
-
-uint16_t AbstractSerializable::unserializeInt8(char const *buffer, int8_t &member) const {
-    checkEndBuffer(buffer);
-    memcpy(&member, buffer, 1);
-    return 1;
-}
-
-uint16_t AbstractSerializable::unserializeInt16(char const *buffer, int16_t &member) const {
-    checkEndBuffer(buffer+1);
-    memcpy(&member, buffer, 2);
-    return 2;
-}
-
-uint16_t AbstractSerializable::unserializeInt32(char const *buffer, int32_t &member) const {
-    checkEndBuffer(buffer+3);
-    memcpy(&member, buffer, 4);
-    return 4;
-}
-
-uint16_t AbstractSerializable::unserializeInt64(char const *buffer, int64_t &member) const {
-    checkEndBuffer(buffer+7);
-    memcpy(&member, buffer, 8);
-    return 8;
-}
-
-uint16_t AbstractSerializable::unserializeUint8(char const *buffer, uint8_t &member) const {
-    checkEndBuffer(buffer);
-    memcpy(&member, buffer, 1);
-    return 1;
-}
-
-uint16_t AbstractSerializable::unserializeUint16(char const *buffer, uint16_t &member) const {
-    checkEndBuffer(buffer+1);
-    memcpy(&member, buffer, 2);
-    return 2;
-}
-
-uint16_t AbstractSerializable::unserializeUint32(char const *buffer, uint32_t &member) const {
-    checkEndBuffer(buffer+3);
-    memcpy(&member, buffer, 4);
-    return 4;
-}
-
-uint16_t AbstractSerializable::unserializeUint64(char const *buffer, uint64_t &member) const {
-    checkEndBuffer(buffer+7);
-    memcpy(&member, buffer, 8);
-    return 8;
-}
-
-uint16_t AbstractSerializable::unserializeFloat32(char const *buffer, float &member) const {
-    checkEndBuffer(buffer+3);
-    memcpy(&member, buffer, 4);
-    return 4;
-}
-
-uint16_t AbstractSerializable::unserializeFloat64(char const *buffer, double &member) const {
-    checkEndBuffer(buffer+7);
-    memcpy(&member, buffer, 8);
-    return 8;
-}
-
-uint16_t AbstractSerializable::unserializeString(char const *buffer, std::string &member) const {
-    uint16_t size;
-    unserializeUint16(buffer, size);
-    checkEndBuffer(buffer+2+size);
-    member.assign(buffer+2, size);
-
-    return size+2;
-}
-
-
 std::string TCPPacketHeader::serialize() const {
     std::string buffer;
-    buffer += serializeUint16(opcode);
-    buffer += serializeUint16(length);
+    buffer += opcode.serialize();
+    buffer += length.serialize();
     return buffer;
 }
 
 uint16_t TCPPacketHeader::unserialize(const char *buffer) {
     uint16_t offset = 0;
-    offset += unserializeUint16(buffer+offset, opcode);
-    offset += unserializeUint16(buffer+offset, length);
+    offset += opcode.unserialize(buffer+offset);
+    offset += length.unserialize(buffer+offset);
     return offset;
 }
 
+
+std::string DynMap::serialize() const {
+    std::string buffer;
+    buffer += Uint16Wrapper(map.size()).serialize();
+    auto it = map.begin();
+    for(; it!=map.end(); it++) {
+        buffer += String(it->first).serialize();
+        buffer += it->second->serialize();
+    }
+    return buffer;
+}
+uint16_t DynMap::unserialize(char const * buffer) {
+    uint16_t size, i, offset = 0;
+    offset += Uint16Wrapper().unserialize(buffer);
+    for(i=0; i<size; i++) {
+        String key;
+        Int8Wrapper type;
+        key.setBufferEnd(m_unserializeBufferEnd);
+        type.setBufferEnd(m_unserializeBufferEnd);
+
+        offset += key.unserialize(buffer+offset);
+        offset += type.unserialize(buffer+offset);
+
+        // FIXME: DELETE IT SOMEWHERE
+        AbstractSerializable* obj = makeSerializable(type.value);
+        obj->setBufferEnd(m_unserializeBufferEnd);
+
+        offset += obj->unserialize(buffer+offset);
+        map[key] = obj;
+    }
+    return 2 + offset;
+}
+
+
+
+AbstractSerializable* Ponyca::Net::makeSerializable(int16_t typeInt) {
+    Types type = (Types)typeInt;
+    switch(type) {
+    case Types::BOOL: return new BoolWrapper;
+    case Types::INT8: return new Int8Wrapper;
+    case Types::INT16: return new Int16Wrapper;
+    case Types::INT32: return new Int32Wrapper;
+    case Types::INT64: return new Int64Wrapper;
+    case Types::UINT8: return new Uint8Wrapper;
+    case Types::UINT16: return new Uint16Wrapper;
+    case Types::UINT32: return new Uint32Wrapper;
+    case Types::UINT64: return new Uint64Wrapper;
+    case Types::FLOAT32: return new Float32Wrapper;
+    case Types::FLOAT64: return new Float64Wrapper;
+    case Types::STRING: return new String;
+    case Types::DYNMAP: return new DynMap;
+    }
+    if (typeInt & (int16_t)Types::LIST_OF) {
+        type = (Types)(typeInt & ~(int16_t)Types::LIST_OF);
+        switch(type) {
+        case Types::BOOL: return new List<BoolWrapper>;
+        case Types::INT8: return new List<Int8Wrapper>;
+        case Types::INT16: return new List<Int16Wrapper>;
+        case Types::INT32: return new List<Int32Wrapper>;
+        case Types::INT64: return new List<Int64Wrapper>;
+        case Types::UINT8: return new List<Uint8Wrapper>;
+        case Types::UINT16: return new List<Uint16Wrapper>;
+        case Types::UINT32: return new List<Uint32Wrapper>;
+        case Types::UINT64: return new List<Uint64Wrapper>;
+        case Types::FLOAT32: return new List<Float32Wrapper>;
+        case Types::FLOAT64: return new List<Float64Wrapper>;
+        case Types::STRING: return new List<String>;
+        case Types::DYNMAP: return new List<DynMap>;
+        }
+    }
+    else if (typeInt & (int16_t)Types::MAP_OF) {
+        type = (Types)(typeInt & ~(int16_t)Types::MAP_OF);
+        switch(type) {
+        case Types::BOOL: return new Map<BoolWrapper>;
+        case Types::INT8: return new Map<Int8Wrapper>;
+        case Types::INT16: return new Map<Int16Wrapper>;
+        case Types::INT32: return new Map<Int32Wrapper>;
+        case Types::INT64: return new Map<Int64Wrapper>;
+        case Types::UINT8: return new Map<Uint8Wrapper>;
+        case Types::UINT16: return new Map<Uint16Wrapper>;
+        case Types::UINT32: return new Map<Uint32Wrapper>;
+        case Types::UINT64: return new Map<Uint64Wrapper>;
+        case Types::FLOAT32: return new Map<Float32Wrapper>;
+        case Types::FLOAT64: return new Map<Float64Wrapper>;
+        case Types::STRING: return new Map<String>;
+        case Types::DYNMAP: return new Map<DynMap>;
+        }
+    }
+    return NULL;
+}

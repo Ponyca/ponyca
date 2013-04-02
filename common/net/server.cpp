@@ -1,65 +1,44 @@
 #include "common/net/server.h"
 #include "common/config.h"
 #include "common/logging.h"
-
+#include "build/opcodes.h"
 #include <functional>
 
 using namespace Ponyca;
 using namespace Ponyca::Net;
 
-
-// TODO: Generate that with opcodes_generator.py
-class TestPacket : public AbstractPacket {
-public:
-    TestPacket()
-        : AbstractPacket(0)
-    {}
-    virtual std::string serialize() const {
-        return "";
-    }
-    virtual uint16_t unserialize(char const *buffer) {
-        return 0;
-    }
-};
-AbstractPacket *makePacket(int16_t opcode) {
-    switch(opcode) {
-    case 0x0000: return new TestPacket();
-    default: return NULL;
-    }
-}
-
-
-
-RemoteClient::RemoteClient(asio::io_service &ioService, ServerRouter &server)
+RemotePlayer::RemotePlayer(asio::io_service &ioService, ServerRouter &server)
     : m_socket(ioService)
-    , associatedEntity(0)
     , m_server(server)
     , m_log(m_server.getLog())
-{
+    , AbstractPlayer("Player")
+{}
 
+void RemotePlayer::sendMessage(const std::string &message) {
+    Packets::Message(0, message);
 }
 
-RemoteClient::~RemoteClient() {
+RemotePlayer::~RemotePlayer() {
     if (m_socket.is_open()) {
         m_socket.cancel();
         m_socket.close();
     }
 }
 
-void RemoteClient::start() {
+void RemotePlayer::start() {
     m_readBuffer.clear();
     m_readBuffer.resize(4);
-    auto fn = std::bind(&RemoteClient::handleReadHeader, this,
+    auto fn = std::bind(&RemotePlayer::handleReadHeader, this,
                         std::placeholders::_1);
     auto buffer = asio::buffer(m_readBuffer, 4);
     asio::async_read(m_socket, buffer, fn);
 }
 
-void RemoteClient::send(AbstractPacket const &packet) {
+void RemotePlayer::send(AbstractPacket const &packet) {
     // TODO
 }
 
-void RemoteClient::handleReadHeader(asio::error_code const &error) {
+void RemotePlayer::handleReadHeader(asio::error_code const &error) {
     if (error) {
         displayError(error);
         return;
@@ -76,30 +55,30 @@ void RemoteClient::handleReadHeader(asio::error_code const &error) {
     m_readHeader.setBufferEnd(m_readBuffer.data()+4);
     m_readHeader.unserialize(m_readBuffer.data());
 
-    if (m_readHeader.length == 0) {
+    if (m_readHeader.length.value == 0) {
         // we do not expect a body
         start();
         return;
     }
 
-    m_readBuffer.resize(m_readHeader.length);
-    auto buffer = asio::buffer(m_readBuffer, m_readHeader.length);
-    auto fn = std::bind(&RemoteClient::handleReadBody, this,
+    m_readBuffer.resize(m_readHeader.length.value);
+    auto buffer = asio::buffer(m_readBuffer, m_readHeader.length.value);
+    auto fn = std::bind(&RemotePlayer::handleReadBody, this,
                         std::placeholders::_1);
     asio::async_read(m_socket, buffer, fn);
 }
 
-void RemoteClient::handleReadBody(asio::error_code const &error) {
+void RemotePlayer::handleReadBody(asio::error_code const &error) {
     if (error) {
         displayError(error);
         return;
     }
 
-    if (m_readHeader.length > m_readBuffer.size()) {
+    if (m_readHeader.length.value > m_readBuffer.size()) {
         m_log.logDebug("[%s] Invalid 0x%04x packet of %d bytes (expected %d bytes)",
                        getRemoteAddress().c_str(),
-                       m_readHeader.opcode, m_readBuffer.size(),
-                       m_readHeader.length);
+                       m_readHeader.opcode.value, m_readBuffer.size(),
+                       m_readHeader.length.value);
         m_server.kill(this);
         return;
     }
@@ -117,7 +96,7 @@ void RemoteClient::handleReadBody(asio::error_code const &error) {
     catch (UnserializeError) {
         m_log.logDebug("[%s] Invalid 0x%04x packet of %d bytes",
                        getRemoteAddress().c_str(),
-                       m_readHeader.opcode, m_readBuffer.size());
+                       m_readHeader.opcode.value, m_readBuffer.size());
         m_server.kill(this);
         return;
     }
@@ -125,7 +104,7 @@ void RemoteClient::handleReadBody(asio::error_code const &error) {
     start();
 }
 
-void RemoteClient::handleWrite(asio::error_code const &error) {
+void RemotePlayer::handleWrite(asio::error_code const &error) {
     if (error) {
         displayError(error);
         return;
@@ -133,11 +112,11 @@ void RemoteClient::handleWrite(asio::error_code const &error) {
     // TODO
 }
 
-asio::ip::tcp::socket &RemoteClient::getSocket() {
+asio::ip::tcp::socket &RemotePlayer::getSocket() {
     return m_socket;
 }
 
-std::string RemoteClient::getRemoteAddress() const {
+std::string RemotePlayer::getRemoteAddress() const {
     std::string ra;
     ra += m_socket.remote_endpoint().address().to_string();
     ra += ":";
@@ -145,7 +124,7 @@ std::string RemoteClient::getRemoteAddress() const {
     return ra;
 }
 
-void RemoteClient::displayError(const asio::error_code &error) {
+void RemotePlayer::displayError(const asio::error_code &error) {
     if (m_socket.is_open()) {
         std::string address;
         try {
@@ -246,7 +225,7 @@ void ServerRouter::threadMain() {
 }
 
 void ServerRouter::accept() {
-    RemoteClient *newClient(new RemoteClient(m_ioService, *this));
+    RemotePlayer *newClient(new RemotePlayer(m_ioService, *this));
     m_clients.push_back(newClient);
 
     auto fn = std::bind(&ServerRouter::handleAccept, this,
@@ -255,14 +234,14 @@ void ServerRouter::accept() {
     m_acceptor.async_accept(newClient->getSocket(), fn);
 }
 
-void ServerRouter::send(AbstractPacket const &packet, RemoteClient *ptr) {
+void ServerRouter::send(AbstractPacket const &packet, RemotePlayer *ptr) {
     ptr->send(packet);
 }
 
 void ServerRouter::sendByUsername(AbstractPacket const &packet, std::string const &username) {
     auto it = m_clients.begin();
     for (; it != m_clients.end(); it++) {
-        if ((*it)->username == username) {
+        if ((*it)->getUsername() == username) {
             (*it)->send(packet);
             break;
         }
@@ -283,7 +262,7 @@ void ServerRouter::sendByAddress(AbstractPacket const &packet, std::string const
 void ServerRouter::sendByEntity(AbstractPacket const &packet, uint32_t entityId) {
     auto it = m_clients.begin();
     for (; it != m_clients.end(); it++) {
-        if ((*it)->associatedEntity == entityId) {
+        if ((*it)->getEntityId() == entityId) {
             (*it)->send(packet);
             break;
         }
@@ -297,7 +276,7 @@ void ServerRouter::sendAll(AbstractPacket const &packet) {
     }
 }
 
-void ServerRouter::handleAccept(asio::error_code const &error, RemoteClient *newClient) {
+void ServerRouter::handleAccept(asio::error_code const &error, RemotePlayer *newClient) {
     if (error) {
         if (error == asio::error::operation_aborted) {
             delete newClient;
@@ -311,7 +290,7 @@ void ServerRouter::handleAccept(asio::error_code const &error, RemoteClient *new
     accept();
 }
 
-void ServerRouter::kill(RemoteClient *ptr) {
+void ServerRouter::kill(RemotePlayer *ptr) {
     delete ptr;
     auto it = m_clients.begin();
     for (; it != m_clients.end(); it++) {
@@ -338,7 +317,7 @@ void ServerRouter::displayError(const asio::error_code &error) {
     m_log.logInfo("Error %d: %s", value, message.c_str());
 }
 
-void ServerRouter::nullPacketHandler(ServerRouter &server, RemoteClient &client, AbstractPacket const &packet) {
+void ServerRouter::nullPacketHandler(ServerRouter &server, RemotePlayer &client, AbstractPacket const &packet) {
     std::string address = client.getRemoteAddress();
-    server.getLog().logDebug("Unhandled packet from [%s]: opcode=%d", address.c_str(), packet.opcode);
+    server.getLog().logDebug("Unhandled packet from [%s]: opcode=%d", address.c_str(), packet.opcode.value);
 }

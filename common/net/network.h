@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <cstring>
 #include <map>
 
 namespace Ponyca {
@@ -28,40 +29,194 @@ namespace Ponyca {
         protected:
             char const *m_unserializeBufferEnd;
             void checkEndBuffer(char const *ptr) const;
+        };
 
-            std::string serializeBool(bool v) const;
-            std::string serializeInt8(int8_t v) const;
-            std::string serializeInt16(int16_t v) const;
-            std::string serializeInt32(int32_t v) const;
-            std::string serializeInt64(int64_t v) const;
-            std::string serializeUint8(uint8_t v) const;
-            std::string serializeUint16(uint16_t v) const;
-            std::string serializeUint32(uint32_t v) const;
-            std::string serializeUint64(uint64_t v) const;
-            std::string serializeFloat32(float v) const;
-            std::string serializeFloat64(double v) const;
-            std::string serializeString(std::string const &v) const;
-            template<typename T>
-            std::string serializeList(std::vector<T> const &v) const;
-            template<typename T>
-            std::string serializeMap(std::map<std::string, T> const &v) const;
+        enum class Types {
+            BOOL    = 0x00,
+            INT8    = 0x01,
+            INT16   = 0x02,
+            INT32   = 0x03,
+            INT64   = 0x04,
+            UINT8   = 0x05,
+            UINT16  = 0x06,
+            UINT32  = 0x07,
+            UINT64  = 0x08,
+            FLOAT32 = 0x09,
+            FLOAT64 = 0x0a,
+            STRING  = 0x0b,
+            DYNMAP  = 0x0c,
 
-            uint16_t unserializeBool(char const *buffer, bool &member) const;
-            uint16_t unserializeInt8(char const *buffer, int8_t &member) const;
-            uint16_t unserializeInt16(char const *buffer, int16_t &member) const;
-            uint16_t unserializeInt32(char const *buffer, int32_t &member) const;
-            uint16_t unserializeInt64(char const *buffer, int64_t &member) const;
-            uint16_t unserializeUint8(char const *buffer, uint8_t &member) const;
-            uint16_t unserializeUint16(char const *buffer, uint16_t &member) const;
-            uint16_t unserializeUint32(char const *buffer, uint32_t &member) const;
-            uint16_t unserializeUint64(char const *buffer, uint64_t &member) const;
-            uint16_t unserializeFloat32(char const *buffer, float &member) const;
-            uint16_t unserializeFloat64(char const *buffer, double &member) const;
-            uint16_t unserializeString(char const *buffer, std::string &member) const;
-            template<typename T>
-            uint16_t unserializeList(char const *buffer, std::vector<T> &member) const;
-            template<typename T>
-            uint16_t unserializeMap(char const *buffer, std::map<std::string, T> &member) const;
+            LIST_OF = 0x40,
+            MAP_OF  = 0x80
+        };
+
+        AbstractSerializable* makeSerializable(int16_t typeInt);
+
+        template<typename T, uint16_t S>
+        class PlainTypeWrapper : public AbstractSerializable {
+        public:
+            PlainTypeWrapper() {}
+            PlainTypeWrapper(T v)
+                : value(v)
+            {}
+            virtual std::string serialize() const {
+                return std::string((char*)(&value), S);
+            }
+            virtual uint16_t unserialize(char const * buffer) {
+                checkEndBuffer(buffer);
+                memcpy(&value, buffer, S);
+                return S;
+            }
+
+            T value;
+
+            inline operator T() const { return value; }
+            inline T operator=(T v) { return value = v; }
+            inline T operator+(T v) const { return value+v; }
+            inline T operator-(T v) const { return value-v; }
+            inline T operator*(T v) const { return value*v; }
+            inline T operator/(T v) const { return value/v; }
+            inline T operator%(T v) const { return value%v; }
+            inline T operator++() { return ++value; }
+            inline T operator--() { return --value; }
+            inline T operator++(int) { return value++; }
+            inline T operator--(int) { return value--; }
+            inline bool operator==(T v) const { return value==v; }
+            inline bool operator!=(T v) const { return value!=v; }
+            inline bool operator<(T v) const { return value<v; }
+            inline bool operator>(T v) const { return value>v; }
+            inline bool operator>=(T v) const { return value>=v; }
+            inline bool operator<=(T v) const { return value<=v; }
+            inline T operator!() const { return !value; }
+            inline T operator&&(T v) const { return value&&v; }
+            inline T operator||(T v) const { return value||v; }
+            inline T operator~() const { return ~value; }
+            inline T operator&(T v) const { return value&v; }
+            inline T operator|(T v) const { return value|v; }
+            inline T operator^(T v) const { return value^v; }
+            inline T operator<<(T v) { return value<<v; }
+            inline T operator>>(T v) { return value>>v; }
+            inline T operator+=(T v) { return value+=v; }
+            inline T operator-=(T v) { return value-=v; }
+            inline T operator*=(T v) { return value*=v; }
+            inline T operator/=(T v) { return value/=v; }
+            inline T operator%=(T v) { return value%=v; }
+            inline T operator&=(T v) { return value&=v; }
+            inline T operator|=(T v) { return value|=v; }
+            inline T operator^=(T v) { return value^=v; }
+            inline T operator<<=(T v) { return value<<=v; }
+            inline T operator>>=(T v) { return value>>=v; }
+        };
+
+        typedef PlainTypeWrapper<bool, 1> BoolWrapper;
+        typedef PlainTypeWrapper<int8_t, 1> Int8Wrapper;
+        typedef PlainTypeWrapper<int16_t, 2> Int16Wrapper;
+        typedef PlainTypeWrapper<int32_t, 4> Int32Wrapper;
+        typedef PlainTypeWrapper<int64_t, 8> Int64Wrapper;
+        typedef PlainTypeWrapper<uint8_t, 1> Uint8Wrapper;
+        typedef PlainTypeWrapper<uint16_t, 2> Uint16Wrapper;
+        typedef PlainTypeWrapper<uint32_t, 4> Uint32Wrapper;
+        typedef PlainTypeWrapper<uint64_t, 8> Uint64Wrapper;
+        typedef PlainTypeWrapper<float, 4> Float32Wrapper;
+        typedef PlainTypeWrapper<double, 8> Float64Wrapper;
+
+        class String : public std::string, public AbstractSerializable {
+        public:
+            String() {}
+            String(std::string const &str)
+                : basic_string(str) {}
+            virtual std::string serialize() const {
+                std::string buffer;
+                buffer += Uint16Wrapper(size()).serialize();
+
+                auto it = begin();
+                for(; it!=end(); it++) {
+                    Int8Wrapper wrapper(*it);
+                    buffer += wrapper.serialize();
+                }
+                return buffer;
+            }
+            virtual uint16_t unserialize(char const * buffer) {
+                uint16_t length, i, offset = 0;
+                length = Uint16Wrapper().unserialize(buffer);
+
+                for(i=0; i<length; i++) {
+                    Int8Wrapper obj;
+                    obj.setBufferEnd(m_unserializeBufferEnd);
+                    offset += obj.unserialize(buffer + 2 + offset);
+                    push_back((char)obj.value);
+                }
+
+                return 2 + offset;
+            }
+        };
+
+        template<typename T>
+        class List : public AbstractSerializable {
+        public:
+            virtual std::string serialize() const {
+                std::string buffer;
+                buffer += Uint16Wrapper(vector.size()).serialize();
+
+                auto it = vector.begin();
+                for(; it!=vector.end(); it++) {
+                    buffer += it->serialize();
+                }
+                return buffer;
+            }
+            virtual uint16_t unserialize(char const * buffer) {
+                uint16_t length, i, offset = 0;
+                length = Uint16Wrapper().unserialize(buffer);
+
+                for(i=0; i<length; i++) {
+                    T obj;
+                    obj.setBufferEnd(m_unserializeBufferEnd);
+                    offset += obj.unserialize(buffer + 2 + offset);
+                    vector.push_back(obj);
+                }
+
+                return 2 + offset;
+            }
+
+            std::vector<T> vector;
+        };
+
+        template<typename T>
+        class Map : public AbstractSerializable {
+        public:
+            virtual std::string serialize() const {
+                std::string buffer;
+                buffer += Uint16Wrapper(map.size()).serialize();
+                auto it = map.begin();
+                for(; it!=map.end(); it++) {
+                    buffer += String(it->first).serialize();
+                    buffer += it->second.serialize();
+                }
+                return buffer;
+            }
+            virtual uint16_t unserialize(char const * buffer) {
+                uint16_t size, i, offset = 0;
+                std::string key;
+                offset += Uint16Wrapper().unserialize(buffer);
+                for(i=0; i<size; i++) {
+                    String key;
+                    key.setBufferEnd(m_unserializeBufferEnd);
+                    T obj;
+                    obj.setBufferEnd(m_unserializeBufferEnd);
+                    offset += key.unserialize(buffer+offset);
+                    offset += obj.unserialize(buffer+offset);
+                    map[key] = obj;
+                }
+                return 2 + offset;
+            }
+            std::map<std::string, T> map;
+        };
+
+        class DynMap : public AbstractSerializable {
+        public:
+            virtual std::string serialize() const;
+            virtual uint16_t unserialize(char const * buffer);
+            std::map<String, AbstractSerializable*> map;
         };
 
         class AbstractPacket : public AbstractSerializable {
@@ -69,16 +224,27 @@ namespace Ponyca {
             AbstractPacket(uint16_t opcode_)
                 : opcode(opcode_)
             {}
-            const uint16_t opcode;
+            const Uint16Wrapper opcode;
 
         };
+
+        // Implementation generated by opcodes_generator.py
+        AbstractPacket* makePacket(int16_t opcode);
 
         class TCPPacketHeader : public AbstractSerializable {
         public:
             virtual std::string serialize() const;
             virtual uint16_t unserialize(const char *buffer);
-            uint16_t opcode;
-            uint16_t length;
+            Uint16Wrapper opcode;
+            Uint16Wrapper length;
+        };
+
+        class UDPPacketHeader : public AbstractSerializable {
+        public:
+            virtual std::string serialize() const;
+            virtual uint16_t unserialize(const char *buffer);
+            Uint16Wrapper opcode;
+            Uint16Wrapper length;
         };
 
         class AbstractRouter {
@@ -86,65 +252,6 @@ namespace Ponyca {
             //virtual void send(AbstractPacket const &packet, int32_t sessid) = 0;
             virtual void sendAll(AbstractPacket const &packet) = 0;
         };
-
-
-        template<typename T>
-        std::string AbstractSerializable::serializeList(std::vector<T> const &v) const {
-            std::string buffer;
-            buffer += serializeUint16(v.size());
-
-            typename std::vector<T>::const_iterator it;
-            for(it=v.begin(); it!=v.end(); it++) {
-                buffer += it->serialize();
-            }
-            return buffer;
-        }
-
-        template<typename T>
-        std::string AbstractSerializable::serializeMap(std::map<std::string, T> const &v) const {
-            std::string buffer;
-            buffer += serializeUint16(v.size());
-
-            typename std::map<std::string, T>::const_iterator it;
-            for(it=v.begin(); it!=v.end(); it++) {
-                buffer += serializeString(it->first);
-                buffer += it->second.serialize();
-            }
-            return buffer;
-        }
-
-        template<typename T>
-        uint16_t AbstractSerializable::unserializeList(char const *buffer, std::vector<T> &member) const {
-            uint16_t length, i, offset = 0;
-            unserializeUint16(buffer, length);
-
-            for(i=0; i<length; i++) {
-                T obj;
-                obj.setBufferEnd(m_unserializeBufferEnd);
-                offset += obj.unserialize(buffer + 2 + offset);
-                member.push_back(obj);
-            }
-
-            return 2 + offset;
-        }
-
-        template<typename T>
-        uint16_t AbstractSerializable::unserializeMap(char const *buffer, std::map<std::string, T> &member) const {
-            uint16_t size, i, offset = 0;
-            std::string key;
-            offset += unserializeUint16(buffer, size);
-
-            for(i=0; i<size; i++) {
-                T obj;
-                obj.setBufferEnd(m_unserializeBufferEnd);
-                offset += unserializeString(buffer+offset, key);
-                offset += obj.unserialize(buffer+offset);
-                member[key] = obj;
-            }
-
-            return 2 + offset;
-        }
-
     }
 }
 
