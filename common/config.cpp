@@ -148,6 +148,10 @@ void ConfigManager::loadFile(std::string const &path) {
     }
 }
 
+bool ConfigManager::hasKey(std::string const &key) const {
+    return m_map.find(key) != m_map.end();
+}
+
 ConfigManager::ValueType Ponyca::getConfigValue(std::string const &key) {
     return ConfigManager::GetInstance()[key].value;
 }

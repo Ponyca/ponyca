@@ -50,25 +50,25 @@ namespace Ponyca {
             ValueType &operator=(char const *s);
 
             inline ValueType &operator=(int8_t i) {
-                return operator =(i);
+                return operator =((int32_t)i);
             }
             inline ValueType &operator=(uint8_t i) {
-                return operator =(i);
+                return operator =((int32_t)i);
             }
             inline ValueType &operator=(int16_t i) {
-                return operator =(i);
+                return operator =((int32_t)i);
             }
             inline ValueType &operator=(uint16_t i) {
-                return operator =(i);
+                return operator =((int32_t)i);
             }
             inline ValueType &operator=(uint32_t i) {
-                return operator =(i);
+                return operator =((int32_t)i);
             }
             inline ValueType &operator=(int64_t i) {
-                return operator =(i);
+                return operator =((int32_t)i);
             }
             inline ValueType &operator=(uint64_t i) {
-                return operator =(i);
+                return operator =((int32_t)i);
             }
         };
 
@@ -87,6 +87,7 @@ namespace Ponyca {
 
         ConfigManager() {}
         ValueContainer &operator[](std::string const &key);
+        bool hasKey(std::string const &key) const;
 
         void loadFile(std::string const &path);
 
