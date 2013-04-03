@@ -15,7 +15,8 @@ RemotePlayer::RemotePlayer(asio::io_service &ioService, ServerRouter &server)
 {}
 
 void RemotePlayer::sendMessage(const std::string &message) {
-    Packets::Message(0, message);
+    Packets::Message m(0, message);
+    send(m);
 }
 
 RemotePlayer::~RemotePlayer() {
@@ -35,7 +36,20 @@ void RemotePlayer::start() {
 }
 
 void RemotePlayer::send(AbstractPacket const &packet) {
-    // TODO
+    TCPPacketHeader header;
+    std::string serialized = packet.serialize();
+    header.opcode = packet.opcode;
+    header.length = serialized.length();
+    serialized.insert(0, header.serialize());
+    m_writeQueue.push(serialized);
+    writePacket();
+}
+
+void RemotePlayer::writePacket() {
+    auto buffer = asio::buffer(m_writeQueue.back().c_str(), m_writeQueue.back().length());
+    auto fn = std::bind(&RemotePlayer::handleWrite, this,
+                        std::placeholders::_1);
+    asio::async_write(m_socket, buffer, fn);
 }
 
 void RemotePlayer::handleReadHeader(asio::error_code const &error) {
@@ -54,8 +68,26 @@ void RemotePlayer::handleReadHeader(asio::error_code const &error) {
 
     m_readHeader.unserialize(m_readBuffer.data(), m_readBuffer.size());
 
+    m_log.logDebug("[%s] Got header: 0x%04x with %d bytes body.",
+                   getRemoteAddress().c_str(),
+                   m_readHeader.opcode.value,
+                   m_readHeader.length.value);
+
     if (m_readHeader.length.value == 0) {
         // we do not expect a body
+        AbstractPacket *packet = makePacket(m_readHeader.opcode);
+        try {
+            ServerRouter::HandlerType fn;
+            fn = m_server.getPacketHandler(m_readHeader.opcode);
+            fn(m_server, *this, *packet);
+        }
+        catch (UnserializeError) {
+            m_log.logDebug("[%s] Invalid 0x%04x packet without body",
+                           getRemoteAddress().c_str(),
+                           m_readHeader.opcode.value);
+            m_server.kill(this);
+            return;
+        }
         start();
         return;
     }
@@ -107,7 +139,10 @@ void RemotePlayer::handleWrite(asio::error_code const &error) {
         displayError(error);
         return;
     }
-    // TODO
+    m_writeQueue.pop();
+    if (!m_writeQueue.empty()) {
+        writePacket();
+    }
 }
 
 asio::ip::tcp::socket &RemotePlayer::getSocket() {

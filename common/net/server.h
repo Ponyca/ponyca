@@ -3,6 +3,7 @@
 
 #include <asio.hpp>
 #include <memory>
+#include <queue>
 
 #include "common/net/network.h"
 #include "common/player.h"
@@ -31,11 +32,14 @@ namespace Ponyca {
             std::string getRemoteAddress() const;
 
         private:
+            void writePacket();
+
             asio::ip::tcp::socket m_socket;
             ServerRouter &m_server;
             Logger &m_log;
             TCPPacketHeader m_readHeader;
             std::vector<char> m_readBuffer;
+            std::queue<std::string> m_writeQueue;
         };
 
         class ServerRouter : public AbstractRouter {
