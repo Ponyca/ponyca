@@ -81,9 +81,13 @@ set_target_properties(common PROPERTIES LINK_FLAGS "-ldl")
 
 # Enable C++11 on g++/clang++
 if(UNIX)
-    if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER STREQUAL "g++-4.6.3")
+        # Travis' old GCC
+        add_definitions(-std=c++0x)
+    elseif(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        # Latest GCC or Clang
         add_definitions(-std=c++11)
-    endif(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    endif()
 endif(UNIX)
 
 # Opcodes generator
