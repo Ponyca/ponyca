@@ -121,7 +121,7 @@ structures:
         - blockType: blockType
         - blockVariant: blockVariant # Ignored if this block type has no variants
     - placedBlock:
-        - id: worldId
+        - world: worldId
         - coordinates: coordinates
         - block: block
     - client:
