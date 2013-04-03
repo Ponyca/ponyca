@@ -1,6 +1,8 @@
 language: cpp
 before_install:
-  - sudo apt-get install -qq zlib1g-dev libgl1-mesa-swx11-dev libx11-dev libxext-dev libfreetype6-dev libopenal-dev freeglut3-dev libxmu-dev libxi-dev libmsgpack-dev
+  - sudo yes | sudo add-apt-repository ppa:dhart/ppa
+  - sudo apt-get update
+  - sudo apt-get install -qq python3 python3-yaml zlib1g-dev libgl1-mesa-swx11-dev libx11-dev libxext-dev libfreetype6-dev libopenal-dev freeglut3-dev libxmu-dev libxi-dev cxxtest libasio-dev
 compiler:
   - clang
   - gcc
@@ -9,3 +11,4 @@ script:
   - cd build
   - cmake ..
   - make
+  - ./testsrunner

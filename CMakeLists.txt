@@ -5,18 +5,18 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 # Common
-file(GLOB_RECURSE common_sources common/*.cpp)
-include_directories(common/)
+file(GLOB_RECURSE common_sources common/*.cpp build/opcodes.cpp)
+include_directories(common/ ${CMAKE_SOURCE_DIR})
 add_library(common SHARED ${common_sources})
 
 # Client
 file(GLOB_RECURSE client_sources client/*.cpp)
-include_directories(client/ common/)
+include_directories(client/ ${CMAKE_SOURCE_DIR})
 add_executable(client ${client_sources})
 
 # Server
 file(GLOB_RECURSE server_sources server/*.cpp)
-include_directories(server/ common/)
+include_directories(server/ ${CMAKE_SOURCE_DIR})
 add_executable(server ${server_sources})
 
 #add_subdirectory(plugins)
@@ -32,19 +32,17 @@ link_directories(${ZLIB_LINK_DIRS})
 add_definitions(${ZLIB_DEFINITIONS})
 target_link_libraries(common ${ZLIB_LIBRARIES})
 
-# MsgPack
-find_package(MsgPack REQUIRED)
-include_directories(${MSGPACK_INCLUDE_DIRS})
-link_directories(${MSGPACK_LINK_DIRS})
-add_definitions(${MSGPACK_DEFINITIONS})
-target_link_libraries(common ${MSGPACK_LIBRARIES})
-
 # ASIO
 find_package(ASIO REQUIRED)
 include_directories(${ASIO_INCLUDE_DIRS})
 link_directories(${ASIO_LINK_DIRS})
 add_definitions(${ASIO_DEFINITIONS})
 target_link_libraries(common ${ASIO_LIBRARIES})
+
+# Threads
+set(CMAKE_THREAD_PREFER_PTHREAD)
+find_package(Threads REQUIRED)
+target_link_libraries(common ${CMAKE_THREAD_LIBS_INIT})
 
 # OpenGL
 find_package(OpenGL REQUIRED)
@@ -74,6 +72,10 @@ link_directories(${OPENAL_LINK_DIRS})
 add_definitions(${OPENAL_DEFINITIONS})
 target_link_libraries(client ${OPENAL_LIBRARIES})
 
+# UTF8-CPP
+include_directories(${CMAKE_SOURCE_DIR}/libs/utfcpp)
+include_directories(${CMAKE_SOURCE_DIR}/libs/utfcpp/utf8)
+
 # Dynlibs
 set_target_properties(common PROPERTIES LINK_FLAGS "-ldl")
 
@@ -83,3 +85,18 @@ if(UNIX)
         add_definitions(-std=c++11)
     endif(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif(UNIX)
+
+# Opcodes generator
+add_custom_target(opcodes COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/utils/opcodes_generator.py" "${CMAKE_CURRENT_SOURCE_DIR}/common/opcodes.yml" "${CMAKE_SOURCE_DIR}/build/opcodes.h" "${CMAKE_SOURCE_DIR}/build/opcodes.cpp"
+    COMMENT "Generating opcodes..."
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+add_dependencies(common opcodes)
+
+# Tests
+find_package(CxxTest REQUIRED)
+include_directories(${CXXTEST_INCLUDE_DIRS})
+link_directories(${CXXTEST_LINK_DIRS})
+add_definitions(${CXXTEST_DEFINITIONS})
+enable_testing()
+cxxtest_add_test(testsrunner testsrunner.cpp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_serialization.cpp ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_config.cpp)
+target_link_libraries(testsrunner common)

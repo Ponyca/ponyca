@@ -55,45 +55,38 @@ version:
 
 types:
     bool:
-        type: bool
+        type: Ponyca::Net::BoolWrapper
     int8:
-        type: int8_t
+        type: Ponyca::Net::Int8Wrapper
     int16:
-        type: int16_t
+        type: Ponyca::Net::Int16Wrapper
     int32:
-        type: int32_t
+        type: Ponyca::Net::Int32Wrapper
     int64:
-        type: int64_t
+        type: Ponyca::Net::Int64Wrapper
     uint8:
-        type: uint8_t
+        type: Ponyca::Net::Uint8Wrapper
     uint16:
-        type: uint16_t
+        type: Ponyca::Net::Uint16Wrapper
     uint32:
-        type: uint32_t
+        type: Ponyca::Net::Uint32Wrapper
     uint64:
-        type: uint64_t
+        type: Ponyca::Net::Uint64Wrapper
     float32:
-        type: float
+        type: Ponyca::Net::Float32Wrapper
     float64:
-        type: double
+        type: Ponyca::Net::Float64Wrapper
     string:
         # Prefixed with its size (uint16) when serialized
-        type: std::string
-    msgpack:
-        # Prefixed with its size (uint16) when serialized
-        type: msgpack::unpacked
+        type: Ponyca::Net::String
 
-    coordinates:
-        type: struct coordinates # x,y,z (uint16, uint16, uint16)
-    position:
-        type: struct position # x,y,z (float64, float64, float64)
-    direction:
-        type: struct direction # vert, horiz (uint16, uint16)
     structure:
-        type: Ponyca::Structure
+        type: Ponyca::Net::AbstractSerializable&
     list:
         # Prefixed with its length (uint16) when serialized
-        type: std::vector<Ponyca::Structure>
+        type: Ponyca::Net::List
+    dynmap:
+        type: Ponyca::Net::DynMap
 
 aliases:
     # The following are dynamically-attributed identifiers. They start from
@@ -112,28 +105,42 @@ aliases:
 # ---------------
 
 structures:
+    - coordinates:
+        - x: uint32
+        - y: uint32
+        - z: uint32
+    - position:
+        - x: float64
+        - y: float64
+        - z: float64
+    - direction:
+        - vert: uint16
+        - horiz: uint16
+
     - block:
-        - type: blockType
-        - variant: blockVariant # Ignored if this block type has no variants
+        - blockType: blockType
+        - blockVariant: blockVariant # Ignored if this block type has no variants
     - placedBlock:
-        - id: worldId
-        - position: coordinates
+        - world: worldId
+        - coordinates: coordinates
         - block: block
     - client:
         - id: clientId
     - entity:
         - id: entityId
+        - world: worldId
         - position: position
         - direction: direction
         - name: string
         - playedBy: clientId # 0 means played by AI.
-        - type: entityType
-        - metadata: msgpack
+        - entityType: entityType
+        - metadata: dynmap # of strings: key1|value1|key2|value2
     - protocolVersion:
         - majorVersion: uint16
         - minorVersion: uint16
     - chunk:
-        - list: list # 3D-list of "block".
+        - list: list:uint8 # 3D-list of "block" (size: 100*100*100).
+
 
 # Opcodes and content of the packet
 # ---------------------------------
@@ -143,39 +150,40 @@ structures:
 opcodes:
     # 0x0***: COMMON
     ## 0x00**: CONNECTION
-    - "0x0000":
+    "0x0000":
         name: connect
         fields:
             - protocol: protocolVersion
-            - extensions: msgpack
-    - "0x0001":
+            - clientId: clientId
+            - extensions: list:string # of strings
+    "0x0001":
         name: login
         fields:
             - username: string
             - password: string
-    - "0x0002":
+    "0x0002":
         name: ping
         fields:
             - id: uint32
     ## 0x01**: CLIENTS
-    - "0x0100":
+    "0x0100":
         name: requestClientList
         fields:
-    - "0x0101":
+    "0x0101":
         name: clientList
         fields:
-            - list: list
-    - "0x0102":
+            - list: list:uint32
+    "0x0102":
         name: getClientToClientAddresses
         fields:
-            - list: list
-    - "0x0103":
+            - list: list:string
+    "0x0103":
         name: closeConnection # or kick
         fields:
             - clientId: clientId
             - reason: string
     ## 0x02**: MESSAGING
-    - "0x0200":
+    "0x0200":
         name: message
         fields:
             - author: clientId # 0 means it's a server message.
@@ -183,78 +191,78 @@ opcodes:
 
     # 0x1*** MAP
     ## 0x10** WORLDS
-    - "0x1000":
+    "0x1000":
         name: worldCreation
         fields:
             - id: worldId
             - name: string
-    - "0x1001":
+    "0x1001":
         name: worldDestruction
         fields:
             - id: worldId
-    - "0x1002": # Not used. Reserved for consistency.
+    "0x1002": # Not used. Reserved for consistency.
         name: worldUpdate
         fields:
-    - "0x1003":
+    "0x1003":
         name: worldsListRequest
         fields:
-    - "0x1004":
+    "0x1004":
         name: worldsList
         fields:
-            - list: list
+            - list: list:string
 
     ## 0x11**: BLOCKS
-    - "0x1100": # Not used. Reserved for consistency.
+    "0x1100": # Not used. Reserved for consistency.
         name: blockSpawn
         fields:
-    - "0x1101": # Not used. Reserved for consistency.
+    "0x1101": # Not used. Reserved for consistency.
         name: blockDestruction 
         fields:
-    - "0x1102":
+    "0x1102":
         name: blockUpdate
         fields:
             - block: placedBlock
-    - "0x1103":
+    "0x1103":
         name: chunkRequest
         fields:
             - coordinates: coordinates # Coordinates of any block in the chunk
-    - "0x1104":
+    "0x1104":
         name: chunkUpdate
         fields:
             - coordinates: coordinates # Coordinates of the first block of the chunl
             - chunk: chunk
     
-    ## 0x12**: ENTITIES
-    - "0x1200":
+    ## 0x12**: ENTITIES
+    "0x1200":
         name: entitySpawn
         fields:
             - entity: entity
-    - "0x1201":
+    "0x1201":
         name: entityDestruction
         fields:
             - id: entityId
-    - "0x1202":
+    "0x1202":
         name: entityUpdate
         fields:
             - entity: entity
-    - "0x1203":
+    "0x1203":
         name: entityListRequest
         fields:
-    - "0x1204":
+    "0x1204":
         name: entityList
         fields:
-            - list: list # List of entities
-    - "0x1205":
+            - list: list:entity # List of entities
+    "0x1205":
         name: entityMove
         fields:
             - id: entityId
             - newPosition: position
-    - "0x1206":
+    "0x1206":
         name: entityDirection
         fields:
             - id: entityId
             - newDirection: direction
-    - "0x1207": # Used for updating only one key-value pair
+    "0x1207": # Used for updating only one key-value pair
         name: entityUpdateMetada
         fields:
             - id: entityId
@@ -267,25 +275,25 @@ opcodes:
 
 blockTypes:
     # 0x0***: gas
-    - "0x0000":
+    "0x0000":
         name: air
         variants:
     # 0x1***: liquids
-    - "0x1000":
+    "0x1000":
         name: water
         variants:
     # 0x2***: raw materials
-    - "0x2000":
+    "0x2000":
         name: wood
         variants:
-            - "0x0000": oak
-            - "0x0001": birch
-    - "0x2001":
+            "0x0000": oak
+            "0x0001": birch
+    "0x2001":
         name: stone
         variants:
 
 entityTypes:
     # 0x0***: humanoids
-    - "0x0000": human
+    "0x0000": human
     # 0x1***: animals
-    - "0x1000": pig
+    "0x1000": pig
