@@ -153,9 +153,9 @@ namespace Ponyca {
             delete[] msg;
         }
 
-        Log::Level      m_level;
-        unsigned int    m_bufferSize;
         std::string     m_name;
+        unsigned int    m_bufferSize;
+        Log::Level      m_level;
         std::vector< std::shared_ptr<Log::AbstractBackend> > m_backends;
         static std::map<std::string, Logger*> m_Loggers;
     };

@@ -31,11 +31,11 @@ namespace Ponyca {
             std::string getRemoteAddress() const;
 
         private:
-            ServerRouter &m_server;
             asio::ip::tcp::socket m_socket;
+            ServerRouter &m_server;
+            Logger &m_log;
             TCPPacketHeader m_readHeader;
             std::vector<char> m_readBuffer;
-            Logger &m_log;
         };
 
         class ServerRouter : public AbstractRouter {

@@ -8,10 +8,10 @@ using namespace Ponyca;
 using namespace Ponyca::Net;
 
 RemotePlayer::RemotePlayer(asio::io_service &ioService, ServerRouter &server)
-    : m_socket(ioService)
+    : AbstractPlayer("Player")
+    , m_socket(ioService)
     , m_server(server)
     , m_log(m_server.getLog())
-    , AbstractPlayer("Player")
 {}
 
 void RemotePlayer::sendMessage(const std::string &message) {

@@ -71,10 +71,6 @@ public:
 
         std::string serialized(t.serialize());
 
-        std::fstream fs("./serialize.dat", std::ios::out | std::ios::binary);
-        fs << serialized;
-        fs.close();
-
         TestType t2;
         t2.unserialize(serialized.c_str(), serialized.size());
 

@@ -23,7 +23,7 @@ CommandParser::Context::Context(const std::string &input_,
         size_t pos, lastpos;
         lastpos = cmdendpos+1;
 
-        while(pos=input_.find_first_of(" \t\n", lastpos)) {
+        while((pos=input_.find_first_of(" \t\n", lastpos))) {
             if (pos == std::string::npos) {
                 pos = input_.length();
             }
@@ -58,7 +58,7 @@ CommandParser::~CommandParser() {
 
 bool CommandParser::run(std::string const &line) {
     ConsolePlayer p;
-    run(line, p);
+    return run(line, p);
 }
 
 bool CommandParser::run(std::string const &line, AbstractPlayer &player) {
@@ -76,7 +76,6 @@ bool CommandParser::run(std::string const &line, AbstractPlayer &player) {
             player.sendMessage(errorMessage);
             return false;
         }
-        return true;
     }
     catch(NotFoundError& e) {
         // is the command a cvar ? print it.
@@ -89,11 +88,12 @@ bool CommandParser::run(std::string const &line, AbstractPlayer &player) {
         }
         return false;
     }
+    return true;
 }
 
 bool CommandParser::runFile(std::string const &filename) {
     ConsolePlayer p;
-    runFile(filename, p);
+    return runFile(filename, p);
 }
 
 bool CommandParser::runFile(std::string const &filename, AbstractPlayer &player) {

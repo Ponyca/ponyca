@@ -31,8 +31,8 @@ namespace Ponyca {
             std::string inputCommand;
             Command parsedCommand;
             ArgList args;
-            AbstractPlayer &player;
             CommandParser &parser;
+            AbstractPlayer &player;
         };
 
         class NotFoundError : public std::runtime_error {

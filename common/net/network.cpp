@@ -65,6 +65,7 @@ AbstractSerializable* Ponyca::Net::makeSerializable(int16_t typeInt) {
     case Types::FLOAT64: return new Float64Wrapper;
     case Types::STRING: return new String;
     case Types::DYNMAP: return new DynMap;
+    default:; // empty, to remove -Wswitch warning
     }
     if (typeInt & (int16_t)Types::LIST_OF) {
         type = (Types)(typeInt & ~(int16_t)Types::LIST_OF);
@@ -82,6 +83,7 @@ AbstractSerializable* Ponyca::Net::makeSerializable(int16_t typeInt) {
         case Types::FLOAT64: return new List<Float64Wrapper>;
         case Types::STRING: return new List<String>;
         case Types::DYNMAP: return new List<DynMap>;
+        default:;
         }
     }
     else if (typeInt & (int16_t)Types::MAP_OF) {
@@ -100,6 +102,7 @@ AbstractSerializable* Ponyca::Net::makeSerializable(int16_t typeInt) {
         case Types::FLOAT64: return new Map<Float64Wrapper>;
         case Types::STRING: return new Map<String>;
         case Types::DYNMAP: return new Map<DynMap>;
+        default:;
         }
     }
     return NULL;

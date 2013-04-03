@@ -8,6 +8,7 @@ namespace Ponyca {
     class AbstractPlayer {
     public:
         AbstractPlayer(std::string const &username);
+        virtual ~AbstractPlayer() {}
 
         inline std::string const &getUsername() const {
             return m_username;
