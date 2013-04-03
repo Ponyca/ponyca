@@ -4,16 +4,6 @@
 
 using namespace Ponyca::Net;
 
-void AbstractSerializable::setBufferEnd(char const *endptr) {
-    m_unserializeBufferEnd = endptr;
-}
-
-void AbstractSerializable::checkEndBuffer(char const *ptr) const {
-    if (ptr >= m_unserializeBufferEnd) {
-        throw UnserializeError();
-    }
-}
-
 std::string TCPPacketHeader::serialize() const {
     std::string buffer;
     buffer += opcode.serialize();
@@ -21,10 +11,10 @@ std::string TCPPacketHeader::serialize() const {
     return buffer;
 }
 
-uint16_t TCPPacketHeader::unserialize(const char *buffer) {
+uint16_t TCPPacketHeader::unserialize(const char *buffer, uint16_t availableBytes) {
     uint16_t offset = 0;
-    offset += opcode.unserialize(buffer+offset);
-    offset += length.unserialize(buffer+offset);
+    offset += opcode.unserialize(buffer+offset, availableBytes-offset);
+    offset += length.unserialize(buffer+offset, availableBytes-offset);
     return offset;
 }
 
@@ -39,23 +29,19 @@ std::string DynMap::serialize() const {
     }
     return buffer;
 }
-uint16_t DynMap::unserialize(char const * buffer) {
-    uint16_t size, i, offset = 0;
-    offset += Uint16Wrapper().unserialize(buffer);
-    for(i=0; i<size; i++) {
+uint16_t DynMap::unserialize(char const *buffer, uint16_t availableBytes) {
+    uint16_t i, offset = 0;
+    Uint16Wrapper length;
+    offset += length.unserialize(buffer+offset, availableBytes-offset);
+    for(i=0; i<length.value; i++) {
         String key;
         Int8Wrapper type;
-        key.setBufferEnd(m_unserializeBufferEnd);
-        type.setBufferEnd(m_unserializeBufferEnd);
-
-        offset += key.unserialize(buffer+offset);
-        offset += type.unserialize(buffer+offset);
+        offset += key.unserialize(buffer+offset, availableBytes-offset);
+        offset += type.unserialize(buffer+offset, availableBytes-offset);
 
         // FIXME: DELETE IT SOMEWHERE
         AbstractSerializable* obj = makeSerializable(type.value);
-        obj->setBufferEnd(m_unserializeBufferEnd);
-
-        offset += obj->unserialize(buffer+offset);
+        offset += obj->unserialize(buffer+offset, availableBytes-offset);
         map[key] = obj;
     }
     return 2 + offset;

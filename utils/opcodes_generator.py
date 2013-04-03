@@ -67,7 +67,7 @@ def parse_field(field, type_, namespace, types, indent_h):
     is_structure = types[ignore_template(type_)][2]
     out_h += '\n%s%s %s;' % (indent_h, cpp_type, field)
     out_serialize = '\n    buffer += %s.serialize();' % field
-    out_unserialize = '\n    size += %s.unserialize(buffer);' % field
+    out_unserialize = '\n    offset += %s.unserialize(buffer, availableBytes-offset);' % field
     return (out_h, out_serialize, out_unserialize)
 
 def handle_fields(fields, namespace, class_, types, indent_h, ctor=None):
@@ -79,12 +79,12 @@ def handle_fields(fields, namespace, class_, types, indent_h, ctor=None):
         out_h += '\n%s%s() %s {}' % (indent_h, class_, ctor_s)
     out_h += '\n%s%s(%%s);' % (indent_h, class_) + \
             '\n%svirtual std::string serialize() const;' % indent_h + \
-            '\n%svirtual uint16_t unserialize(char const *buffer);' % indent_h
+            '\n%svirtual uint16_t unserialize(char const *buffer, uint16_t availableBytes);' % indent_h
     out_cpp = ''
     serialize = '\nstd::string %s::serialize() const {\n    std::string buffer = "";' % namespace
-    unserialize = 'uint16_t %s::unserialize(char const *buffer) {' % \
+    unserialize = 'uint16_t %s::unserialize(char const *buffer, uint16_t availableBytes) {' % \
             namespace
-    unserialize += '\n    uint16_t size = 0;'
+    unserialize += '\n    uint16_t offset = 0;'
     fields = fields or []
     constructor = '\n\n%s::%s(%%s)' % (namespace, class_)
     if ctor:
@@ -108,7 +108,7 @@ def handle_fields(fields, namespace, class_, types, indent_h, ctor=None):
     out_h %= ', '.join(constructor_params)
     out_cpp += constructor[0:-1] % (', '.join(constructor_params)) + ' {\n}'
     out_cpp += serialize + '\n    return buffer;\n}\n'
-    out_cpp += unserialize + '\n    return size;\n}\n'
+    out_cpp += unserialize + '\n    return offset;\n}\n'
     return (out_h, out_cpp)
 
 def main(infile):

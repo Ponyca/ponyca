@@ -23,12 +23,7 @@ namespace Ponyca {
         class AbstractSerializable {
         public:
             virtual std::string serialize() const = 0;
-            virtual uint16_t unserialize(char const * buffer) = 0;
-            void setBufferEnd(char const *endptr);
-
-        protected:
-            char const *m_unserializeBufferEnd;
-            void checkEndBuffer(char const *ptr) const;
+            virtual uint16_t unserialize(char const *buffer, uint16_t availableBytes) = 0;
         };
 
         enum class Types {
@@ -62,8 +57,10 @@ namespace Ponyca {
             virtual std::string serialize() const {
                 return std::string((char*)(&value), S);
             }
-            virtual uint16_t unserialize(char const * buffer) {
-                checkEndBuffer(buffer);
+            virtual uint16_t unserialize(char const *buffer, uint16_t availableBytes) {
+                if (S > availableBytes) {
+                    throw UnserializeError();
+                }
                 memcpy(&value, buffer, S);
                 return S;
             }
@@ -136,18 +133,18 @@ namespace Ponyca {
                 }
                 return buffer;
             }
-            virtual uint16_t unserialize(char const * buffer) {
-                uint16_t length, i, offset = 0;
-                length = Uint16Wrapper().unserialize(buffer);
+            virtual uint16_t unserialize(char const *buffer, uint16_t availableBytes) {
+                uint16_t i, offset = 0;
+                Uint16Wrapper length;
+                offset += length.unserialize(buffer, availableBytes-offset);
 
-                for(i=0; i<length; i++) {
+                for(i=0; i<length.value; i++) {
                     Int8Wrapper obj;
-                    obj.setBufferEnd(m_unserializeBufferEnd);
-                    offset += obj.unserialize(buffer + 2 + offset);
+                    offset += obj.unserialize(buffer+offset, availableBytes-offset);
                     push_back((char)obj.value);
                 }
 
-                return 2 + offset;
+                return offset;
             }
         };
 
@@ -164,18 +161,18 @@ namespace Ponyca {
                 }
                 return buffer;
             }
-            virtual uint16_t unserialize(char const * buffer) {
-                uint16_t length, i, offset = 0;
-                length = Uint16Wrapper().unserialize(buffer);
+            virtual uint16_t unserialize(char const *buffer, uint16_t availableBytes) {
+                uint16_t i, offset = 0;
+                Uint16Wrapper length;
+                offset += length.unserialize(buffer+offset, availableBytes-offset);
 
-                for(i=0; i<length; i++) {
+                for(i=0; i<length.value; i++) {
                     T obj;
-                    obj.setBufferEnd(m_unserializeBufferEnd);
-                    offset += obj.unserialize(buffer + 2 + offset);
+                    offset += obj.unserialize(buffer+offset, availableBytes-offset);
                     vector.push_back(obj);
                 }
 
-                return 2 + offset;
+                return offset;
             }
 
             std::vector<T> vector;
@@ -194,17 +191,15 @@ namespace Ponyca {
                 }
                 return buffer;
             }
-            virtual uint16_t unserialize(char const * buffer) {
-                uint16_t size, i, offset = 0;
-                std::string key;
-                offset += Uint16Wrapper().unserialize(buffer);
-                for(i=0; i<size; i++) {
+            virtual uint16_t unserialize(char const *buffer, uint16_t availableBytes) {
+                uint16_t i, offset = 0;
+                Uint16Wrapper length;
+                offset += length.unserialize(buffer+offset, availableBytes-offset);
+                for(i=0; i<length.value; i++) {
                     String key;
-                    key.setBufferEnd(m_unserializeBufferEnd);
                     T obj;
-                    obj.setBufferEnd(m_unserializeBufferEnd);
-                    offset += key.unserialize(buffer+offset);
-                    offset += obj.unserialize(buffer+offset);
+                    offset += key.unserialize(buffer+offset, availableBytes-offset);
+                    offset += obj.unserialize(buffer+offset, availableBytes-offset);
                     map[key] = obj;
                 }
                 return 2 + offset;
@@ -215,7 +210,7 @@ namespace Ponyca {
         class DynMap : public AbstractSerializable {
         public:
             virtual std::string serialize() const;
-            virtual uint16_t unserialize(char const * buffer);
+            virtual uint16_t unserialize(char const *buffer, uint16_t availableBytes);
             std::map<String, AbstractSerializable*> map;
         };
 
@@ -234,7 +229,7 @@ namespace Ponyca {
         class TCPPacketHeader : public AbstractSerializable {
         public:
             virtual std::string serialize() const;
-            virtual uint16_t unserialize(const char *buffer);
+            virtual uint16_t unserialize(const char *buffer, uint16_t availableBytes);
             Uint16Wrapper opcode;
             Uint16Wrapper length;
         };
@@ -242,7 +237,7 @@ namespace Ponyca {
         class UDPPacketHeader : public AbstractSerializable {
         public:
             virtual std::string serialize() const;
-            virtual uint16_t unserialize(const char *buffer);
+            virtual uint16_t unserialize(const char *buffer, uint16_t availableBytes);
             Uint16Wrapper opcode;
             Uint16Wrapper length;
         };

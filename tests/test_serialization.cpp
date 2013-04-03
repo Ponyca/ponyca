@@ -10,9 +10,9 @@ public:
         buffer += value.serialize();
         return buffer;
     }
-    virtual uint16_t unserialize(const char *buffer) {
+    virtual uint16_t unserialize(const char *buffer, uint16_t availableBytes) {
         uint16_t offset = 0;
-        offset += value.unserialize(buffer+offset);
+        offset += value.unserialize(buffer+offset, availableBytes-offset);
         return offset;
     }
     Net::Int32Wrapper value;
@@ -30,14 +30,14 @@ public:
         buffer += fieldMap.serialize();
         return buffer;
     }
-    virtual uint16_t unserialize(const char *buffer) {
+    virtual uint16_t unserialize(const char *buffer, uint16_t availableBytes) {
         uint16_t offset = 0;
-        offset += fieldInt.unserialize(buffer+offset);
-        offset += fieldFloat.unserialize(buffer+offset);
-        offset += fieldString.unserialize(buffer+offset);
-        offset += fieldString2.unserialize(buffer+offset);
-        offset += fieldList.unserialize(buffer+offset);
-        offset += fieldMap.unserialize(buffer+offset);
+        offset += fieldInt.unserialize(buffer+offset, availableBytes-offset);
+        offset += fieldFloat.unserialize(buffer+offset, availableBytes-offset);
+        offset += fieldString.unserialize(buffer+offset, availableBytes-offset);
+        offset += fieldString2.unserialize(buffer+offset, availableBytes-offset);
+        offset += fieldList.unserialize(buffer+offset, availableBytes-offset);
+        offset += fieldMap.unserialize(buffer+offset, availableBytes-offset);
         return offset;
     }
      
@@ -71,9 +71,12 @@ public:
 
         std::string serialized(t.serialize());
 
+        std::fstream fs("./serialize.dat", std::ios::out | std::ios::binary);
+        fs << serialized;
+        fs.close();
+
         TestType t2;
-        t2.setBufferEnd(serialized.c_str()+serialized.size());
-        t2.unserialize(serialized.c_str());
+        t2.unserialize(serialized.c_str(), serialized.size());
 
         TS_ASSERT_EQUALS(t2.fieldInt, 42);/*
         TS_ASSERT_DELTA(t2.fieldFloat, 13.37, 0.001);

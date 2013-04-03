@@ -52,8 +52,7 @@ void RemotePlayer::handleReadHeader(asio::error_code const &error) {
         return;
     }
 
-    m_readHeader.setBufferEnd(m_readBuffer.data()+4);
-    m_readHeader.unserialize(m_readBuffer.data());
+    m_readHeader.unserialize(m_readBuffer.data(), m_readBuffer.size());
 
     if (m_readHeader.length.value == 0) {
         // we do not expect a body
@@ -86,8 +85,7 @@ void RemotePlayer::handleReadBody(asio::error_code const &error) {
     AbstractPacket *packet = makePacket(m_readHeader.opcode);
     try {
         std::string str(m_readBuffer.begin(), m_readBuffer.end());
-        packet->setBufferEnd(str.c_str()+m_readHeader.length);
-        packet->unserialize(str.c_str());
+        packet->unserialize(str.c_str(), str.size());
 
         ServerRouter::HandlerType fn;
         fn = m_server.getPacketHandler(m_readHeader.opcode);
