@@ -7,10 +7,6 @@
 
 using namespace Ponyca;
 
-void handleAwesome(Net::ServerRouter &server, Net::RemotePlayer &client, Net::AbstractPacket const &packet) {
-
-}
-
 int main(int argc, char** argv) {
     try {
         // Set up logging
@@ -39,8 +35,6 @@ int main(int argc, char** argv) {
         // Initialize everything
         Net::ServerRouter sr;
         sr.listen();
-
-        sr.setPacketHandler(0x0000, handleAwesome);
 
         // Listen for console commands
         try {
