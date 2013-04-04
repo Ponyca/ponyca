@@ -284,13 +284,16 @@ blockTypes:
         variants:
     # 0x2***: raw materials
     "0x2000":
+        name: dirt
+        variants:
+    "0x2001":
+        name: stone
+        variants:
+    "0x2002":
         name: wood
         variants:
             "0x0000": oak
             "0x0001": birch
-    "0x2001":
-        name: stone
-        variants:
 
 entityTypes:
     # 0x0***: humanoids
