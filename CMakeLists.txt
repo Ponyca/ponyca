@@ -5,9 +5,9 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 # Common
-file(GLOB_RECURSE common_sources common/*.cpp build/opcodes.cpp)
+file(GLOB_RECURSE common_sources common/*.cpp)
 include_directories(common/ ${CMAKE_SOURCE_DIR})
-add_library(common SHARED ${common_sources})
+add_library(common SHARED ${common_sources} build/opcodes.cpp)
 
 # Client
 file(GLOB_RECURSE client_sources client/*.cpp)

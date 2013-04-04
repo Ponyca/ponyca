@@ -25,7 +25,7 @@ FOOTER_H = """
 """
 
 HEADER_CPP = """
-#include "opcodes.h"
+#include "build/opcodes.h"
 
 """
 
