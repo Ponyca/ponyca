@@ -63,6 +63,8 @@ bool CommandParser::run(std::string const &line) {
 }
 
 bool CommandParser::run(std::string const &line, AbstractPlayer &player) {
+    if (PluginsInterface::GetInstance().runCommand(line, player))
+        return true;
     try {
         Context ctx = Context(line, *this, player);
         try {

@@ -3,7 +3,7 @@
 using namespace Ponyca;
 
 AbstractPlayer::AbstractPlayer(const std::string &username)
-    : m_username(username)
+    : m_username(username), m_entityId(0)
 {}
 
 

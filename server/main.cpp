@@ -1,6 +1,7 @@
 #include <iostream>
 #include "common/net/server.h"
 #include "common/config.h"
+#include "common/plugins.h"
 #include "common/logging.h"
 #include "common/commandparser.h"
 #include "build/opcodes.h"
@@ -20,6 +21,8 @@ int main(int argc, char** argv) {
 
         // Run autoexec.cfg (if any)
         parser.runFile("./autoexec.cfg");
+
+        PluginsInterface pluginsInterface;
 
         // Run CLI args
         std::string command;

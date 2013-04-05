@@ -2,7 +2,9 @@
 #define COMMON_PLUGINS_H
 
 #include <Python.h>
+#include <string>
 #include "common/singleton.h"
+#include "common/player.h"
 
 namespace Ponyca {
     class PluginsInterface : public Singleton<PluginsInterface> {
@@ -10,6 +12,10 @@ namespace Ponyca {
         PyObject *Python;
         PluginsInterface();
         ~PluginsInterface();
+
+        bool runCommand(std::string const &line, AbstractPlayer &player);
+    private:
+        static PyObject *GetPythonPlayer(AbstractPlayer &player);
     };
 };
 

@@ -1,3 +1,5 @@
 *~
 *.swp
 build/
+plugins/__pycache__/
+plugins/*.pyc
