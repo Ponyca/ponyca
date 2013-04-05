@@ -1,12 +1,7 @@
 #ifndef COMMON_NET_NETWORK_H
 #define COMMON_NET_NETWORK_H
 
-#include <cstdint>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <cstring>
-#include <map>
+#include "common/pch.h"
 
 namespace Ponyca {
     namespace Net {

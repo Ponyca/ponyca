@@ -1,6 +1,5 @@
-#include <cstring>
-
-#include "network.h"
+#include "common/pch.h"
+#include "common/net/network.h"
 
 using namespace Ponyca::Net;
 

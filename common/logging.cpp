@@ -1,5 +1,4 @@
-#include <iostream>
-
+#include "common/pch.h"
 #include "common/logging.h"
 
 using namespace Ponyca;

@@ -1,8 +1,8 @@
+#include "common/pch.h"
 #include "common/net/server.h"
 #include "common/config.h"
 #include "common/logging.h"
 #include "build/opcodes.h"
-#include <functional>
 
 using namespace Ponyca;
 using namespace Ponyca::Net;

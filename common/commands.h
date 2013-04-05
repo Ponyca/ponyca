@@ -1,6 +1,7 @@
 #ifndef COMMON_COMMANDS_H
 #define COMMON_COMMANDS_H
 
+#include "common/pch.h"
 #include "common/commandparser.h"
 
 namespace Ponyca {

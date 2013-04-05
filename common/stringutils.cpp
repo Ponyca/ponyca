@@ -1,4 +1,5 @@
-#include "stringutils.h"
+#include "common/pch.h"
+#include "common/stringutils.h"
 
 void Ponyca::StringUtils::trim(std::string &str) {
     while(str.length() > 0 && isWhitespace(str.at(0))) {

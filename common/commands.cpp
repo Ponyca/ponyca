@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "common/commands.h"
 #include "common/config.h"
 

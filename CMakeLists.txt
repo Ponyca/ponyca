@@ -3,11 +3,25 @@ project(ponyca)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+include(PrecompiledHeader)
+
+# Enable C++11 on g++/clang++
+if(UNIX)
+    if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        add_definitions(-std=c++0x)
+    endif()
+endif(UNIX)
 
 # Common
 file(GLOB_RECURSE common_sources common/*.cpp)
 include_directories(common/ ${CMAKE_SOURCE_DIR})
 add_library(common SHARED ${common_sources} build/opcodes.cpp)
+
+if(UNIX AND CMAKE_COMPILER_IS_GNUCXX)
+    set_target_properties(common PROPERTIES PCH_DEFINITIONS -fPIC)
+endif()
+add_precompiled_header(common common/pch.h)
+
 
 # Client
 file(GLOB_RECURSE client_sources client/*.cpp)
@@ -79,12 +93,6 @@ include_directories(${CMAKE_SOURCE_DIR}/libs/utfcpp/utf8)
 # Dynlibs
 set_target_properties(common PROPERTIES LINK_FLAGS "-ldl")
 
-# Enable C++11 on g++/clang++
-if(UNIX)
-    if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        add_definitions(-std=c++0x)
-    endif()
-endif(UNIX)
 
 # Opcodes generator
 add_custom_target(opcodes COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/utils/opcodes_generator.py" "${CMAKE_CURRENT_SOURCE_DIR}/common/opcodes.yml" "${CMAKE_SOURCE_DIR}/build/opcodes.h" "${CMAKE_SOURCE_DIR}/build/opcodes.cpp"

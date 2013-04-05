@@ -1,7 +1,7 @@
 #ifndef COMMON_SINGLETON_H
 #define COMMON_SINGLETON_H
 
-#include <memory>
+#include "common/pch.h"
 
 template<typename T>
 class Singleton {

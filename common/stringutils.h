@@ -1,7 +1,7 @@
 #ifndef COMMON_STRINGUTILS_H
 #define COMMON_STRINGUTILS_H
 
-#include <string>
+#include "common/pch.h"
 
 namespace Ponyca {
     namespace StringUtils {

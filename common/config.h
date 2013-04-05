@@ -1,10 +1,8 @@
 #ifndef COMMON_CONFIG_H
 #define COMMON_CONFIG_H
 
-#include <string>
-#include <map>
-
-#include "singleton.h"
+#include "common/pch.h"
+#include "common/singleton.h"
 
 namespace Ponyca {
     class ConfigManager : public Singleton<ConfigManager> {

@@ -1,7 +1,7 @@
 #ifndef COMMON_PLAYER_H
 #define COMMON_PLAYER_H
 
-#include <string>
+#include "common/pch.h"
 #include "common/logging.h"
 
 namespace Ponyca {

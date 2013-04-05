@@ -1,10 +1,6 @@
-#include <cmath>
-#include <stdexcept>
-#include <fstream>
-#include <iostream>
-
-#include "config.h"
-#include "stringutils.h"
+#include "common/pch.h"
+#include "common/config.h"
+#include "common/stringutils.h"
 
 using namespace Ponyca;
 

@@ -1,12 +1,7 @@
 #ifndef COMMON_LOGGING_H
 #define COMMON_LOGGING_H
 
-#include <map>
-#include <vector>
-#include <string>
-#include <cstdarg>
-#include <fstream>
-
+#include "common/pch.h"
 #include "common/singleton.h"
 
 #define LOG_FUNCTION_TEMPLATE(_name_, _level_, _prefix_) \
