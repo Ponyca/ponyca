@@ -76,6 +76,13 @@ target_link_libraries(client ${OPENAL_LIBRARIES})
 include_directories(${CMAKE_SOURCE_DIR}/libs/utfcpp)
 include_directories(${CMAKE_SOURCE_DIR}/libs/utfcpp/utf8)
 
+# Python 3
+find_package(Python3Libs REQUIRED)
+include_directories(${PYTHON3_INCLUDE_DIRS})
+link_directories(${PYTHON3_LINK_DIRS})
+add_definitions(${PYTHON3_DEFINITIONS})
+target_link_libraries(common ${PYTHON3_LIBRARIES})
+
 # Dynlibs
 set_target_properties(common PROPERTIES LINK_FLAGS "-ldl")
 

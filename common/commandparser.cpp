@@ -5,6 +5,7 @@
 #include "common/config.h"
 #include "common/stringutils.h"
 #include "common/commands.h"
+#include "common/plugins.h"
 
 using namespace Ponyca;
 
