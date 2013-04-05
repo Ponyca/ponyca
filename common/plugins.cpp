@@ -32,8 +32,10 @@ bool Ponyca::PluginsInterface::runCommand(std::string const &line, AbstractPlaye
     if (!PyCallable_Check(func))
         throw std::runtime_error("ponyca.run_command is not callable.");
     PyObject *args = PyTuple_New(2);
+    if (!args) // This is bad. Py_Finalize() has been called before us.
+        return false;
     PyTuple_SetItem(args, 0, PyUnicode_FromString(line.c_str()));
-    PyTuple_SetItem(args, 1, GetPythonPlayer(player));
+    PyTuple_SetItem(args, 1, getPythonPlayer(player));
 
     PyObject *p_handled = PyObject_CallObject(func, args);
     Py_DECREF(func);
@@ -48,9 +50,26 @@ bool Ponyca::PluginsInterface::runCommand(std::string const &line, AbstractPlaye
 
 }
 
-PyObject *Ponyca::PluginsInterface::GetPythonPlayer(AbstractPlayer &player) {
-    PyObject *tuple = PyTuple_New(2);
-    PyTuple_SetItem(tuple, 0, PyUnicode_FromString(player.getUsername().c_str()));
-    PyTuple_SetItem(tuple, 1, PyLong_FromLong(player.getEntityId()));
-    return tuple;
+PyObject *Ponyca::PluginsInterface::getPythonPlayer(AbstractPlayer &player) {
+    PyObject *cls = PyObject_GetAttrString(Python, "Player");
+    if (!cls) {
+        PyErr_Print();
+        throw std::runtime_error("ponyca.py lacks the Player class.");
+    }
+    if (!PyCallable_Check(cls))
+        throw std::runtime_error("ponyca.Player is not callable.");
+    PyObject *args = PyTuple_New(2);
+    PyTuple_SetItem(args, 0, PyUnicode_FromString(player.getUsername().c_str()));
+    PyTuple_SetItem(args, 1, PyLong_FromLong(player.getEntityId()));
+
+    PyObject *p_player = PyObject_CallObject(cls, args);
+    Py_DECREF(cls);
+    Py_DECREF(args);
+    if (p_player) {
+        return p_player;
+    }
+    else {
+        PyErr_Print();
+        return NULL;
+    }
 }

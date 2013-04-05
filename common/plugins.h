@@ -15,7 +15,7 @@ namespace Ponyca {
 
         bool runCommand(std::string const &line, AbstractPlayer &player);
     private:
-        static PyObject *GetPythonPlayer(AbstractPlayer &player);
+        PyObject *getPythonPlayer(AbstractPlayer &player);
     };
 };
 

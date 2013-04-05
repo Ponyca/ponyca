@@ -9,6 +9,37 @@ print('Loading ponyca.py.')
 class InvalidPlugin(Exception):
     pass
 
+class Chat:
+    """Object passed to command functions in order to provide them
+    with useful resources (reply functions, ...)."""
+    pass
+
+class Msg:
+    """A string, with extra data."""
+    def __init__(self, line, player):
+        self._line = line
+        self._player = player
+    @property
+    def line(self):
+        return self._line
+    @property
+    def player(self):
+        return self._player
+
+class Player:
+    """Represents a player."""
+    def __init__(self, username, entityId):
+        assert isinstance(username, str), username
+        assert isinstance(entityId, int), entityId
+        self._username = username
+        self._entityId = entityId
+    @property
+    def username(self):
+        return self._username
+    @property
+    def entityId(self):
+        return self._entityId
+
 class Plugin:
     __plugins = set()
     @classmethod
@@ -39,6 +70,6 @@ def _run_command(line, player):
     elif len(plugins) == 0:
         return False
     else:
-        getattr(list(plugins)[0], command)(player, line, line.split(' ')[1:])
+        getattr(list(plugins)[0], command)(Chat(), Msg(line, player), line.split(' ')[1:])
         return True
 

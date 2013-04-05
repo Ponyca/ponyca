@@ -1,7 +1,7 @@
 import ponyca
 
 class Admin(ponyca.Plugin):
-    def load(self, player, msg, args):
+    def load(self, chat, msg, args):
         """<plugin name>
 
         Loads the plugin."""
